@@ -1,30 +1,69 @@
 #!/usr/bin/env bash
+# **** License ****
+#
+# Copyright (C) 2017 by Helmrock Consulting
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# **** End License ****
+#
+# Author: Neil Beadle
+# Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
+
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
 
-RFC2136_Installer=rfc2136_install
+NAME='ddns_rfc2136'
+PAYLOAD='payload'
+SED='gsed -i.bak '
+SEDCMD='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
+UPDATE_CPYRT=(installer Remove_RFC2136.sh decompress LICENSE)
+VERSION=$(cat VERSION)
+RFC2136="${NAME}.${VERSION}."
+INSTALL="install_${NAME}.v${VERSION}"
 
 if [ -e "${0##*/}" ]; then
 	BASEDIR=`pwd`
-	rm $RFC2136_Installer.tgz
-	cd payload
-	tar zcf ../payload.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude='*~' ./*
+	[[ -f ${RFC2136}setup.tgz ]] && rm ${RFC2136}setup.tgz
+	cd ${PAYLOAD}
+	tar zcf ../${PAYLOAD}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude='*~' ./*
 	cd ..
 
-	if [ -e "payload.tgz" ]; then
-		cat decompress payload.tgz > $RFC2136_Installer.tgz
+	if [ -e "${PAYLOAD}.tgz" ]; then
+
+		for i in ${UPDATE_CPYRT[@]}
+		do
+			if [[ -f "${i}" ]]
+			then
+				# Update Copyright to current year
+				eval ${SED} \'${SEDCMD}\' ${i}
+			fi
+		done
+		cat decompress ${PAYLOAD}.tgz >> ${INSTALL}
+
 	else
-		echo "payload.tgz does not exist"
+		echo "${PAYLOAD}.tgz does not exist"
 		exit 1
 	fi
 
-	chmod 755 $RFC2136_Installer.tgz
-	echo "$RFC2136_Installer.tgz created"
+	chmod 755 ${INSTALL}.tgz
+	echo "${RFC2136_Installer}.tgz created"
 	cd ..
-	tar -zcf $RFC2136_Installer.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude='*~' $BASEDIR/*
-	mv $RFC2136_Installer.tgz ${BASEDIR}/
+	tar -zcf ${INSTALL}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude='*~' $BASEDIR/*
+	mv ${INSTALL}.tgz ${BASEDIR}/
 	cd ${BASEDIR}
-	[ ${1} ] && /usr/bin/scp ${BASEDIR}/$RFC2136_Installer.tgz  ${1}@scratch:/tmp/
+
+# scp the build to our test router for debugging
+	[[ ${1} ]] && /usr/bin/scp -i ~/.ssh/jeff_id_rsa "${BASEDIR}"/${INSTALL} ${1}@unms-server:/tmp/${INSTALL}
 else
 	echo "$(basename $0) must be run in the directory where it is located."
 fi

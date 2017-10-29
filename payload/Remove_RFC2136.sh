@@ -1,21 +1,40 @@
 #!/usr/bin/env bash
-# Script to remove LDC Router RFC2136 support
-VERSION="v3.1"
+# **** License ****
+#
+# Copyright (C) 2017 by Helmrock Consulting
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# **** End License ****
+#
+# Author: Neil Beadle
+# Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
+
 ME="${0##*/} ${VERSION}: "
 
-# Uncomment these lines to enable debugging
-# source /config/user-data/KH_Source/bash_debug_function.sh
-# s_dbg on verb
+# Uncomment for debugging or syntax checking
+# Syntax check - uncomment for non execution dry run:
+# set -n
+# source ./bash_debug_function.sh
+# s_dbg on verbose
 # DEBUG=Yes
 
-# Make sure script runs as root
-if [[ ${EUID} == 0 ]]
-then
-  echo "This script must be run as the admin user!"
-  #exit 1
+# Make sure script is run as admin
+if [[ ${EUID} -eq 0 ]]; then
+	echo 'This script must be run as the EdgeOS admin user, not root!'
+	exit 1
 fi
 
-# Set up the Vyatta environment
+# Set up the EdgeOS environment
 source /opt/vyatta/etc/functions/script-template
 OPRUN=/opt/vyatta/bin/vyatta-op-cmd-wrapper
 CFGRUN=/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper
@@ -120,7 +139,8 @@ try ()
 }
 
 # Usage: yesno prompt...
-yesno(){
+yesno ()
+{
   default=
 
   if [[ "${1}" = "-y" ]]
@@ -155,39 +175,33 @@ yesno(){
   done
 }
 
-Delete_RFC2136(){
-local FILES2REMOVE=(/config/user-data/KH_Source /config/auth/keys /config/scripts/post-config.d/KH_Install_Packages.sh /var/lib/my_packages/)
+Delete_RFC2136 ()
+{
+local rfc2136_tmpl="/opt/vyatta/share/vyatta-cfg/templates/service/dns/dynamic/interface/node.tag/rfc2136/"
+local post_cfg="/config/scripts/post-config.d/Install_Packages.sh"
+local my_pkgs="/var/lib/my_packages/"
+local FILES2RM=( ${rfc2136_tmpl} ${post_cfg} ${my_pkgs})
 
-  echo_logger I "Opening EdgeOS configuration session..."
-  try begin
-  echo_logger I "Deleting router rfc2136 dynamic DNS support..."
-  try delete service dns dynamic
-  try delete port-forward
-  try delete system package
-  try set system host-name ubnt
-  echo_logger I "Closing EdgeOS configuration session"
-  try commit  # End the CLI session
-  try save    # Save the configuration
-  echo_logger I "Closing EdgeOS configuration session..."
-  try end
-
-  for i in ${FILES2REMOVE[@]}; do
-    try rm -rf "${i}"
+  for i in ${FILES2RM[@]}; do
+    if
+    then
+      [[ -d "${i}" ]] try sudo rm -rf "${i}"
+    fi
   done
 }
 
-main(){
+main ()
+{
   echo_logger I "This script will completely remove and erase all RFC 2136 DDNS support and reset the system hostname to 'ubnt'!"
   if yesno -y "Is that OK? [Y/n]: "
   then
-    echo_logger I "Starting LDC EdgeOS Router RFC 2136 DDNS configuration removal..."
-    cd ~  # Make sure we're not in KH_Source when we remove it!
+    echo_logger I "Starting EdgeOS Router RFC 2136 DDNS configuration removal..."
     Delete_RFC2136
-    echo_logger I "LDC EdgeOS Router RFC 2136 DDNS configuration removal completed."
+    echo_logger I "EdgeOS Router RFC 2136 DDNS configuration removal completed."
   else
-    echo_logger I "LDC EdgeOS Router RFC 2136 DDNS configuration removal canceled!"
+    echo_logger I "EdgeOS Router RFC 2136 DDNS configuration removal canceled!"
   fi
 }
 
-# Now let's get to business!
+# Now let's do it!
 main

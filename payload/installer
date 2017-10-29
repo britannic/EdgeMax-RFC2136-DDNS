@@ -1,6 +1,22 @@
-#!/usr/bin/env bash
-# LDC Router configuration with RFC2136 support
-VERSION="v3.5"
+# **** License ****
+#
+# Copyright (C) 2017 by Helmrock Consulting
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#			http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# **** End License ****
+#
+# Author: Neil Beadle
+# Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
 
 # Uncomment for debugging or syntax checking
 # Syntax check - uncomment for non execution dry run:
@@ -9,9 +25,9 @@ VERSION="v3.5"
 # s_dbg on verbose
 # DEBUG=Yes
 
-# Make sure script runs as root
+# Make sure script is run as admin
 if [[ ${EUID} -eq 0 ]]; then
-	echo 'This script must be run as the ubnt admin user, not root!'
+	echo 'This script must be run as the EdgeOS admin user, not root!'
 	exit 1
 fi
 
@@ -78,60 +94,60 @@ echo_logger ()
 {
 local MSG=
 
-  shopt -s checkwinsize
-  COLUMNS=$(tput cols)
+	shopt -s checkwinsize
+	COLUMNS=$(tput cols)
 
-  case "${1}" in
-    E)
-      shift
-      MSG="[$(red)$(bold)ERROR$(normal)]: ${@}"
-      LOG="[ERROR]: ${@}";;
-    F)
-      shift
-      MSG="[$(red)$(bold)FAILED$(normal)]: ${@}"
-      LOG="[FAILED]: ${@}";;
-    FE)
-      shift
-      MSG="[$(red)$(bold)FATAL ERROR$(normal)]: ${@}"
-      LOG="[FATAL]: ${@}";;
-    I)
-      shift
-      MSG="[$(blue)$(bold)INFO$(normal)]: ${@}"
-      LOG="[INFO]: ${@}";;
-    S)
-      shift
-      MSG="[$(green)$(bold)OK$(normal)]: ${@}"
-      LOG="[OK]: ${@}";;
-    T)
-      shift
-      MSG="[$(tan)$(bold)TRYING$(normal)]: ${@}"
-      LOG="[TRYING]: ${@}";;
-    W)
-      shift
-      MSG="[$(yellow)$(bold)WARNING$(normal)]: ${@}"
-      LOG="[WARNING]: ${@}";;
-    *)
-      echo "ERROR: usage: echo_logger MSG TYPE(E, F, FE, I, S, T, W) MSG."
-      exit 1;;
-  esac
+	case "${1}" in
+		E)
+			shift
+			MSG="[$(red)$(bold)ERROR$(normal)]: ${@}"
+			LOG="[ERROR]: ${@}";;
+		F)
+			shift
+			MSG="[$(red)$(bold)FAILED$(normal)]: ${@}"
+			LOG="[FAILED]: ${@}";;
+		FE)
+			shift
+			MSG="[$(red)$(bold)FATAL ERROR$(normal)]: ${@}"
+			LOG="[FATAL]: ${@}";;
+		I)
+			shift
+			MSG="[$(blue)$(bold)INFO$(normal)]: ${@}"
+			LOG="[INFO]: ${@}";;
+		S)
+			shift
+			MSG="[$(green)$(bold)OK$(normal)]: ${@}"
+			LOG="[OK]: ${@}";;
+		T)
+			shift
+			MSG="[$(tan)$(bold)TRYING$(normal)]: ${@}"
+			LOG="[TRYING]: ${@}";;
+		W)
+			shift
+			MSG="[$(yellow)$(bold)WARNING$(normal)]: ${@}"
+			LOG="[WARNING]: ${@}";;
+		*)
+			echo "ERROR: usage: echo_logger MSG TYPE(E, F, FE, I, S, T, W) MSG."
+			exit 1;;
+	esac
 
-  MSG=$(echo ${MSG} | fold -s -w ${COLUMNS})
-  echo "$(echo ${MSG} | ansi)"
-  logger -t ${ME} "${LOG}"
+	MSG=$(echo ${MSG} | fold -s -w ${COLUMNS})
+	echo "$(echo ${MSG} | ansi)"
+	logger -t ${ME} "${LOG}"
 }
 
 # Function to output command status of success or failure to screen and log
 try ()
 {
-  [[ ${DEBUG} ]] && echo_logger T "[${@}]..."
-  if eval ${@}
-  then
-    echo_logger                 S "[${@}]."
-    return 0
-  else
-    echo_logger                 E "[${@}] unsuccessful!"
-    return 1
-  fi
+	[[ ${DEBUG} ]] && echo_logger T "[${@}]..."
+	if eval ${@}
+	then
+		echo_logger									S "[${@}]."
+		return 0
+	else
+		echo_logger									E "[${@}] unsuccessful!"
+		return 1
+	fi
 }
 
 # Usage: yesno prompt...
@@ -139,99 +155,99 @@ yesno ()
 {
 default=
 
-  if [[ "${1}" = "-y" ]]
-  then
-    default='y'
-    shift
-  elif [[ "${1}" = "-n" ]]
-  then
-    default='n'
-    shift
-  fi
+	if [[ "${1}" = "-y" ]]
+	then
+		default='y'
+		shift
+	elif [[ "${1}" = "-n" ]]
+	then
+		default='n'
+		shift
+	fi
 
-  if [[ ${#} = 0 ]]
-  then
-    prompt="[Y/n]: "
-  else
-    prompt="${@}"
-  fi
+	if [[ ${#} = 0 ]]
+	then
+		prompt="[Y/n]: "
+	else
+		prompt="${@}"
+	fi
 
-  while true
-  do
-    read -p "${prompt}" || exit 1
-    if [[ -z "${REPLY}" && ! -z "${default}" ]]
-    then
-      REPLY=$default
-    fi
-    case "${REPLY}" in
-      y*|Y*)  return 0;;
-      n*|N*)  return 1;;
-          *)  echo "Answer (y)es or (n)o please";;
-    esac
-  done
+	while true
+	do
+		read -p "${prompt}" || exit 1
+		if [[ -z "${REPLY}" && ! -z "${default}" ]]
+		then
+			REPLY=$default
+		fi
+		case "${REPLY}" in
+			y*|Y*)	return 0;;
+			n*|N*)	return 1;;
+					*)	echo "Answer (y)es or (n)o please";;
+		esac
+	done
 }
 
 # Print a line of repeating characters across the current screen width
 print_line ()
 {
-  printf "\n"
-  eval printf %.0s${1:-\-} '{1..'"${2:-$(tput cols)}"\}
-  printf "\n\n"
+	printf "\n"
+	eval printf %.0s${1:-\-} '{1..'"${2:-$(tput cols)}"\}
+	printf "\n\n"
 }
 
 Internet ()
 {
-  if sudo curl -D- -o /dev/null -s http://www.google.com 2>&1> /dev/null
-  then
-    return 0
-  else
-    return 1
-  fi
+	if sudo curl -D- -o /dev/null -s http://www.google.com 2>&1> /dev/null
+	then
+		return 0
+	else
+		return 1
+	fi
 }
 
 # Check version and set up environment
 Check_Version ()
 {
-  # ER-Lite
-  # v1.2.0:           build 4574253
-  # v1.4.1:           build 4648309
-  # v1.5.0:           build 4677648
-  # v1.6.0:           build 4716006
-  # v1.7.0:           build 4783374
-  # v1.8.0:           build 4853089
-  # v1.8.5:           build 4884695
-  # v1.9.0:           build 4901118
-  # v1.9.1:           build 4939093
-  # v1.9.1.1:         build 4977347
-  # v1.9.7:           build 5001798
-  # v1.9.7+hotfix:    build 5005851
-  # v1.9.7+hotfix.2:  build 5001798
-  # v1.9.7+hotfix.3:  build 5013619
-  # v1.9.7+hotfix.4:  build 5024004
+	# ER-Lite
+	# v1.2.0:						build 4574253
+	# v1.4.1:						build 4648309
+	# v1.5.0:						build 4677648
+	# v1.6.0:						build 4716006
+	# v1.7.0:						build 4783374
+	# v1.8.0:						build 4853089
+	# v1.8.5:						build 4884695
+	# v1.9.0:						build 4901118
+	# v1.9.1:						build 4939093
+	# v1.9.1.1:					build 4977347
+	# v1.9.7:						build 5001798
+	# v1.9.7+hotfix:		build 5005851
+	# v1.9.7+hotfix.2:	build 5001798
+	# v1.9.7+hotfix.3:	build 5013619
+	# v1.9.7+hotfix.4:	build 5024004
 
-  # ER-X
-  # v1.9.7+hotfix.4:  build 5024279
+	# ER-X
+	# v1.9.7+hotfix.4:	build 5024279
 
-  # UniFi Security Gateway
-  # v4.3.49:          build 5001153 USG
-  # v4.4.8:           build 5023698 USG
+	# UniFi Security Gateway
+	# v4.3.49:					build 5001153 USG
+	# v4.4.8:						build 5023698 USG
 
-  if [[ ${BUILD} > 4783374 ]]   # Script is tested on builds > OS v1.7.1
-  then
-    return 1
-  elif [[ ${BUILD} < 4783374 ]] # OS must be upgraded
-  then
-    return 2
-  else
-    return 0
-  fi
+	if [[ ${BUILD} > 4783374 ]]		# Script is tested on builds > OS v1.7.1
+	then
+		return 1
+	elif [[ ${BUILD} < 4783374 ]] # OS must be upgraded
+	then
+		return 2
+	else
+		return 0
+	fi
 }
 
 # Make sure we clean up session on deliberate and accidental exits
 atexit ()
 {
-  end
-  print_line \*
+	end
+	print_line \*
 }
 
 # Install the rfc2136.dynamic.dns templates in /opt/vyatta/share/vyatta-cfg/templates
@@ -247,25 +263,25 @@ TLVL="service/dns"
 local i=0
 ERROR=0
 
-  print_line \*
-  echo_logger I "Patching EdgeOS [${VER}] with RFC2136 DDNS support..."
-  try sudo install -o root -g root -m 0755 "${BASE}/${DCLN} /${DCLN}"
-  try sudo install -o root -g root -m 0755 "${BASE}/${VDIR}/${VSCR}" "/${VDIR}"
-  try sudo cp -rf "${BASE}/${VCFG}/${TLVL}/dynamic/ /${VCFG}/${TLVL}"
-  try sudo chown -R root:root "/${VCFG}/${TLVL}"
+	print_line \*
+	echo_logger I "Adding RFC2136 DDNS support to EdgeOS [${VER}] configuration templates..."
+	try sudo install -o root -g vyattacfg -m 0755 "${BASE}/${DCLN} /${DCLN}"
+	try sudo install -o root -g vyattacfg -m 0755 "${BASE}/${VDIR}/${VSCR}" "/${VDIR}"
+	try sudo cp -rf "${BASE}/${VCFG}/${TLVL}/dynamic/ /${VCFG}/${TLVL}"
+	try sudo chown -R root:vyattacfg "/${VCFG}"
 
-  return ${ERROR}
+	return ${ERROR}
 }
 
 # Check to see if the rfc2136 templates have been installed
 Check_RFC2136_Template ()
 {
-  if [[ -d /opt/vyatta/share/vyatta-cfg/templates/service/dns/dynamic/interface/node.tag/rfc2136/ ]]
-  then
-    return 0
-  else
-    return 1
-  fi
+	if [[ -d /opt/vyatta/share/vyatta-cfg/templates/service/dns/dynamic/interface/node.tag/rfc2136/ ]]
+	then
+		return 0
+	else
+		return 1
+	fi
 }
 
 #update apt repository
@@ -274,27 +290,27 @@ apt_get_Update ()
 local i=1
 ERROR=1
 
-  print_line \*
-  echo_logger I "Updating Debian package repository."
-  # apt-get upgrades sometimes suffer from transient errors caused by main server updates, so retry 3 times with 10s sleep
+	print_line \*
+	echo_logger I "Updating Debian package repository."
+	# apt-get upgrades sometimes suffer from transient errors caused by main server updates, so retry 3 times with 10s sleep
 
-  while [ ${i} -lt 3 ]; do
-    ((i++))
-    if try sudo apt-get -qq update
-    then
-      i=3
-      ERROR=0
-      echo_logger I "Debian package repository update complete."
-    else
-      sleep 10
-    fi
-  done
-  # Exit status may still be bad, so advise
-  if [[ ${ERROR} = 1 ]]
-  then
-    echo_logger FE "Problem updating package repository online (check connectivity), please run script again in 5 minutes."
-    exit 1
-  fi
+	while [ ${i} -lt 3 ]; do
+		((i++))
+		if try sudo apt-get -qq update
+		then
+			i=3
+			ERROR=0
+			echo_logger I "Debian package repository update complete."
+		else
+			sleep 10
+		fi
+	done
+	# Exit status may still be bad, so advise
+	if [[ ${ERROR} = 1 ]]
+	then
+		echo_logger FE "Problem updating package repository online (check connectivity), please run script again in 5 minutes."
+		exit 1
+	fi
 }
 
 # Make sure required packages, RFC 2136 keys and DDNS configuration are maintained across upgrades
@@ -309,27 +325,27 @@ RFC2136_VY_CFG="rfc2136.dynamic.dns"
 RM_RFC2136="Remove_RFC2136.sh"
 ERROR=0
 
-  print_line \*
-  echo_logger I "Setting up router EdgeOS upgrade persistence..."
-  if [[ ! -d "${POST_CFG_DIR}" ]]
-  then
-    try sudo install -d -o root -g root -m 0755 "${POST_CFG_DIR}/"
-  fi
+	print_line \*
+	echo_logger I "Setting up EdgeOS router upgrade persistence..."
+	if [[ ! -d "${POST_CFG_DIR}" ]]
+	then
+		try sudo install -d -o root -g vyattacfg -m 0755 "${POST_CFG_DIR}/"
+	fi
 
-  if [[ ! -d "${TARGET}" ]]
-  then
-    try sudo install -d -o root -g root -m 0755 "${TARGET}"
-  fi
+	if [[ ! -d "${TARGET}" ]]
+	then
+		try sudo install -d -o root -g vyattacfg -m 0755 "${TARGET}"
+	fi
 
-  try sudo cp -rf  "${CWD}/${RFC2136_VY_CFG}" "${TARGET}/"
-  try sudo install -o root -g root -m 0755 "${APTPATH}/${APTSRCLST}" "${TARGET}/${APTSRCLST}"
-  try sudo install -o root -g root -m 0755 "${CWD}/${DEBUG_SH}" "${TARGET}/${DEBUG_SH}"
-  try sudo install -o root -g root -m 0755 "${CWD}/${INSTALLER}" "${TARGET}/${INSTALLER}"
-  try sudo install -o root -g root -m 0755 "${CWD}/${POST_CFG_SCRIPT}" "${POST_CFG_DIR}/${POST_CFG_SCRIPT}"
-  try sudo install -o root -g root -m 0755 "${CWD}/${PUB_KEY}" "${TARGET}/${PUB_KEY}"
-  try sudo install -o root -g root -m 0755 "${CWD}/${RM_RFC2136}" "${TARGET}/${RM_RFC2136}"
+	try sudo cp -rf	 "${CWD}/${RFC2136_VY_CFG}" "${TARGET}/"
+	try sudo install -o root -g vyattacfg -m 0755 "${APTPATH}/${APTSRCLST}" "${TARGET}/${APTSRCLST}"
+	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${DEBUG_SH}" "${TARGET}/${DEBUG_SH}"
+	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${INSTALLER}" "${TARGET}/${INSTALLER}"
+	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${POST_CFG_SCRIPT}" "${POST_CFG_DIR}/${POST_CFG_SCRIPT}"
+	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${PUB_KEY}" "${TARGET}/${PUB_KEY}"
+	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${RM_RFC2136}" "${TARGET}/${RM_RFC2136}"
 
-  return ${ERROR}
+	return ${ERROR}
 }
 
 # Add packages routine, note that the rfc2136.dynamic.dns isn't a real package, so we handle it differently
@@ -340,173 +356,162 @@ GETDNSver=$(version added | awk -F ' ' '/dnsutils/ {print $3}') # Find the insta
 PATCHDIR=$(pwd)
 PKG=''
 
-  #make sure my_packages directory exists
-  if [[ ! -d "/var/lib/my_packages" ]]
-  then
-    echo_logger I "Creating [/var/lib/my_packages]..."
-    if ! try sudo install -d -o root -g root -m 0755 /var/lib/my_packages
-    then
-      echo_logger W "Unable to create [/var/lib/my_packages], attempting to repair..."
-      echo_logger I "Removing [/var/lib/my_packages]..."
-      if try rm -rf /var/lib/my_packages
-      then
-        echo_logger I "Automatic repair: creating [/var/lib/my_packages]"
-        if ! try sudo install -d -o root -g root -m 0755 /var/lib/my_packages
-        then
-          echo_logger W "Unable to create [/var/lib/my_packages]!"
-        else
-          echo_logger I "Directory [/var/lib/my_packages] created"
-        fi
-        echo_logger I "Automatic repair of [/var/lib/my_packages] complete."
-      fi
-    fi
-  fi
+	#make sure my_packages directory exists
+	if [[ ! -d "/var/lib/my_packages" ]]
+	then
+		echo_logger I "Creating [/var/lib/my_packages]..."
+		if ! try sudo install -d -o root -g vyattacfg -m 0755 /var/lib/my_packages
+		then
+			echo_logger W "Unable to create [/var/lib/my_packages], attempting to repair..."
+			echo_logger I "Removing [/var/lib/my_packages]..."
+			if try rm -rf /var/lib/my_packages
+			then
+				echo_logger I "Automatic repair: creating [/var/lib/my_packages]"
+				if ! try sudo install -d -o root -g vyattacfg -m 0755 /var/lib/my_packages
+				then
+					echo_logger W "Unable to create [/var/lib/my_packages]!"
+				else
+					echo_logger I "Directory [/var/lib/my_packages] created"
+				fi
+				echo_logger I "Automatic repair of [/var/lib/my_packages] complete."
+			fi
+		fi
+	fi
 
-  print_line \*
-  if [[ -f "/var/lib/my_packages/debian.wheezy.repo" && $(grep wheezy ${APTPATH}/${APTSRCLST} 2>&1 /dev/null) ]]
-  then
-    echo_logger I "Debian Wheezy [${APTPATH}/${APTSRCLST}] is up to date."
-  else
-    echo_logger I "Adding debian repositories to [${APTPATH}/${APTSRCLST}]."
-    # v1.6.0 and above use wheezy
-    try begin
-    if (grep squeeze ${APTPATH}/${APTSRCLST} 2>&1 /dev/null)
-    then
-      echo_logger I "EdgeOS [${VER}] firmware uses Debian [wheezy], deleting [squeeze] repository configuration..."
-      try delete system package repository
-    fi
-    echo_logger I "This firmware uses Debian [wheezy], updating repository configuration..."
-    try delete system package repository # clean out any references to Debian security updates as MIPS64 Wheezy no longer supported
-    try set system package repository wheezy components 'main contrib non-free'
-    try set system package repository wheezy distribution wheezy
-    try set system package repository wheezy password ''
-    try set system package repository wheezy url 'http://http.us.debian.org/debian/'
-    try set system package repository wheezy username ''
-    try set system package repository wheezy-backports components main
-    try set system package repository wheezy-backports distribution wheezy-backports
-    try set system package repository wheezy-backports password ''
-    try set system package repository wheezy-backports url 'http://http.us.debian.org/debian'
-    try set system package repository wheezy-backports username ''
-    try commit
-    try save
-    try end
+	print_line \*
+	if [[ -f "/var/lib/my_packages/debian.wheezy.repo" && $(grep wheezy ${APTPATH}/${APTSRCLST} 2>&1 /dev/null) ]]
+	then
+		echo_logger I "Debian Wheezy [${APTPATH}/${APTSRCLST}] is up to date."
+	else
+		echo_logger I "Adding debian repositories to [${APTPATH}/${APTSRCLST}]."
+		# v1.6.0 and above use wheezy
+		try begin
+		if (grep squeeze ${APTPATH}/${APTSRCLST} 2>&1 /dev/null)
+		then
+			echo_logger I "EdgeOS [${VER}] firmware uses Debian [wheezy], deleting [squeeze] repository configuration..."
+			try delete system package repository
+		fi
+		echo_logger I "This firmware uses Debian [wheezy], updating repository configuration..."
+		try delete system package repository # clean out any references to Debian security updates as MIPS64 Wheezy no longer supported
+		try set system package repository wheezy components 'main contrib non-free'
+		try set system package repository wheezy distribution wheezy
+		try set system package repository wheezy password ''
+		try set system package repository wheezy url 'http://http.us.debian.org/debian/'
+		try set system package repository wheezy username ''
+		try set system package repository wheezy-backports components main
+		try set system package repository wheezy-backports distribution wheezy-backports
+		try set system package repository wheezy-backports password ''
+		try set system package repository wheezy-backports url 'http://http.us.debian.org/debian'
+		try set system package repository wheezy-backports username ''
+		try commit
+		try save
+		try end
 
-    [ -f /var/lib/my_packages/debian.wheezy.repo ] || \
-    try sudo touch /var/lib/my_packages/debian.wheezy.repo
-  fi
+		[ -f /var/lib/my_packages/debian.wheezy.repo ] || \
+		try sudo touch /var/lib/my_packages/debian.wheezy.repo
+	fi
 
-  # Set up packages to install
-  # Iterate through dependencies and add any unavailable ones to install list
-  for i in ${PKGs}; do
-    case ${i} in
-      "libjson-any-perl")
-        if [[ ! -f "/usr/share/perl5/JSON/Any.pm" ]]
-        then
-          PKG="${PKG} ${i}"
-          echo_logger I "Adding [${i}] package to install list..."
-        fi;;
-      "dnsutils")
-        if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/my_packages/${i}" ]]
-        then
-          PKG="${PKG} ${i}"
-          echo_logger I "Adding [${i}] package to install list..."
-        else
-          # Since nsupdate is already installed, we need to make sure it isn't the version that has the mem.c assert bug with ddclient - unless proven otherwise, we don't mind it being the latest version
-          if [[ ${GETDNSver} != ${DNSver} ]]
-          then
-            PKG="${PKG} ${i}"
-            echo_logger I "Adding [${i}] package to install list..."
-          fi
-        fi;;
-      "rfc2136.dynamic.dns")
-        if [[ ! -f "/var/lib/my_packages/${i}" || ! Check_RFC2136_Template ]]
-        then
-          echo_logger I "Adding [${i}] package to install list..."
-          if ! Install_RFC2136_Support
-          then
-            echo_logger W "Unable to install [${i}] package."
-          else
-            try sudo touch /var/lib/my_packages/${i}
-            echo_logger I "Package [${i}] installed."
-          fi
-        fi;;
-        *)
-        if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/my_packages/${i}" ]]
-        then
-          PKG="${PKG} ${i}"
-          echo_logger I "Adding [${i}] package to install list..."
-        fi;;
-    esac
-  done
+	# Set up packages to install
+	# Iterate through dependencies and add any unavailable ones to install list
+	for i in ${PKGs}; do
+		case ${i} in
+			"dnsutils")
+				if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/my_packages/${i}" ]]
+				then
+					PKG="${PKG} ${i}"
+					echo_logger I "Adding [${i}] package to install list..."
+				else
+					# Since nsupdate is already installed, we need to make sure it isn't the version that has the mem.c assert bug with ddclient - unless proven otherwise, we don't mind it being the latest version
+					if [[ ${GETDNSver} != ${DNSver} ]]
+					then
+						PKG="${PKG} ${i}"
+						echo_logger I "Adding [${i}] package to install list..."
+					fi
+				fi;;
+			"rfc2136.dynamic.dns")
+				if [[ ! -f "/var/lib/my_packages/${i}" || ! Check_RFC2136_Template ]]
+				then
+					echo_logger I "Adding [${i}] package to install list..."
+					if ! Install_RFC2136_Support
+					then
+						echo_logger W "Unable to install [${i}] package."
+					else
+						try sudo touch /var/lib/my_packages/${i}
+						echo_logger I "Package [${i}] installed."
+					fi
+				fi;;
+				*)
+				if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/my_packages/${i}" ]]
+				then
+					PKG="${PKG} ${i}"
+					echo_logger I "Adding [${i}] package to install list..."
+				fi;;
+		esac
+	done
 
-  if [[ "${PKG}" != '' ]]
-  then
-    apt_get_Update
-    echo_logger I "The following package(s) will be installed: [${PKG}]..."
-    for this_pkg in ${PKG}; do
-      echo_logger I "Installing [${this_pkg}] package."
-      if [[ ! -f "/var/lib/my_packages/${this_pkg}" ]]
-      then
-        if ! try sudo apt-get -f -qq -y install ${this_pkg}
-        then
-          echo_logger W "Unable to install package [${this_pkg}]."
-          if [[ ${this_pkg} = "dnsutils" ]]
-          then
-            echo_logger W "[${this_pkg}] provides the fixed version of [/usr/bin/nsupdate]; in order for [ddclient] to update the DDNS IP address, this problem must be fixed."
-            if yesno -y "Would you like to retry installing the package?  [Y/n] "
-            then
-              if ! try sudo apt-get -f -qq -y install ${this_pkg}
-              then
-                echo_logger E "Unable to install [${this_pkg}] on the second attempt; you must run [sudo apt-get -f install dnsutils] after the script completes."
-              fi
-            else
-              echo_logger W "In order for DDNS to work correctly, you must run [sudo apt-get -f install dnsutils] after the script completes."
-            fi
-          fi
-        else
-          try sudo touch /var/lib/my_packages/${this_pkg}
-          echo_logger S "[${this_pkg}] package installed."
-        fi
-      else
-        echo_logger I "[${this_pkg}] package already installed."
-      fi
-    done
-  echo_logger I "Installation of [${PKG}] completed."
-  fi
+	if [[ "${PKG}" != '' ]]
+	then
+		apt_get_Update
+		echo_logger I "The following package(s) will be installed: [${PKG}]..."
+		for this_pkg in ${PKG}; do
+			echo_logger I "Installing [${this_pkg}] package."
+			if [[ ! -f "/var/lib/my_packages/${this_pkg}" ]]
+			then
+				if ! try sudo apt-get -f -qq -y install ${this_pkg}
+				then
+					echo_logger W "Unable to install package [${this_pkg}]."
+					if [[ ${this_pkg} = "dnsutils" ]]
+					then
+						echo_logger W "[${this_pkg}] provides the fixed version of [/usr/bin/nsupdate]; in order for [ddclient] to update the DDNS IP address, this problem must be fixed."
+						if yesno -y "Would you like to retry installing the package?	[Y/n] "
+						then
+							if ! try sudo apt-get -f -qq -y install ${this_pkg}
+							then
+								echo_logger E "Unable to install [${this_pkg}] on the second attempt; you must run [sudo apt-get -f install dnsutils] after the script completes."
+							fi
+						else
+							echo_logger W "In order for DDNS to work correctly, you must run [sudo apt-get -f install dnsutils] after the script completes."
+						fi
+					fi
+				else
+					try sudo touch /var/lib/my_packages/${this_pkg}
+					echo_logger S "[${this_pkg}] package installed."
+				fi
+			else
+				echo_logger I "[${this_pkg}] package already installed."
+			fi
+		done
+	echo_logger I "Installation of [${PKG}] completed."
+	fi
 }
 
 main()
 {
-  print_line \*
-  echo_logger I "${ME}This script will install RFC 2136 dynamic dns (DDNS) support"
-  echo
+	print_line \*
+	echo_logger I "${ME}This script will install RFC 2136 dynamic dns (DDNS) support"
+	echo
 
-  if yesno -y "Is that OK? [Y/n] "
-  then
-    print_line \*
-    echo_logger I "Starting EdgeOS Router DDNS RFC2136 Integration Installer..."
-    if [[ -f /var/lib/my_packages/ddns.configured ]]
-    then
-      try sudo rm /var/lib/my_packages/ddns.configured
-    fi
-    Check_Version
-    case ${?} in
-      0)
-        echo_logger I "EdgeOS [${VER}] detected, firmware is compatible."
-        Add_Pkgs              # Check for existing packages and install any that aren't
-        ;;
-      1)
-        echo_logger FE "EdgeOS [${VER}] detected, [> v1.7.0] firmware required, upgrade and re-run ersetup."
-        exit 1
-        ;;
-      *)
-        echo_logger FE "This shouldn't happen, so we're exiting just in case!"
-        exit 1
-    esac
-  else
-    echo_logger I "Starting EdgeOS Router DDNS RFC2136 Integration aborted!"
-    exit 1
-  fi
+	print_line \*
+	echo_logger I "Starting EdgeOS Router DDNS RFC2136 Integration Installer..."
+	if [[ -f /var/lib/my_packages/ddns.configured ]]
+	then
+		try sudo rm /var/lib/my_packages/ddns.configured
+	fi
+	Check_Version
+	case ${?} in
+		0)
+			echo_logger I "EdgeOS [${VER}] detected, firmware is compatible."
+			# Check for existing packages and install any required
+			Add_Pkgs
+			;;
+		1)
+			echo_logger FE "EdgeOS [${VER}] detected, [> v1.7.0] firmware required, upgrade and re-run ersetup."
+			exit 1
+			;;
+		*)
+			echo_logger FE "This shouldn't happen, so we're exiting just in case!"
+			exit 1
+	esac
 }
 
 # This is where we run the script using the above functions
