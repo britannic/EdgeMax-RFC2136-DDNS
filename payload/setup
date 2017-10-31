@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#			http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -76,6 +76,7 @@ alias white='tput setaf 7'
 alias yellow='tput setaf 3'
 alias ansi='sed -r "s/\[(.[^]]*)\]/\[$(cyan)\1$(normal)\]/g"'
 
+VERSION="1.2"
 SHOWVER=$(version | sed 's/$/;/g')
 BUILD=$(echo ${SHOWVER} | awk 'BEGIN {RS=";"} /Build ID:/ {print $3}')
 VER=$(echo ${SHOWVER} | awk 'BEGIN {RS=";"} /Version:/ {print $2}')
@@ -86,7 +87,7 @@ WANIF=$(ip route get 8.8.8.8 | awk -F"dev " 'NR==1 {split($2,a," ");print a[1]}'
 APTPATH="/etc/apt"
 APTSRCLST="sources.list"
 BASE_DIR="/config"
-TARGET="${BASE_DIR}/user-data/KH_Source"
+TARGET="${BASE_DIR}/user-data/RFC2136"
 ERROR=0
 
 # Setup the echo_logger function
@@ -131,8 +132,9 @@ local MSG=
 			exit 1;;
 	esac
 
-	MSG=$(echo ${MSG} | fold -s -w ${COLUMNS})
-	echo "$(echo ${MSG} | ansi)"
+	MSG=$(echo "${MSG}" | ansi)
+	let COLUMNS=${#MSG}-${#@}+${COLUMNS}
+	echo "${MSG}" | fold -sw ${COLUMNS}
 	logger -t ${ME} "${LOG}"
 }
 
@@ -148,43 +150,6 @@ try ()
 		echo_logger									E "[${@}] unsuccessful!"
 		return 1
 	fi
-}
-
-# Usage: yesno prompt...
-yesno ()
-{
-default=
-
-	if [[ "${1}" = "-y" ]]
-	then
-		default='y'
-		shift
-	elif [[ "${1}" = "-n" ]]
-	then
-		default='n'
-		shift
-	fi
-
-	if [[ ${#} = 0 ]]
-	then
-		prompt="[Y/n]: "
-	else
-		prompt="${@}"
-	fi
-
-	while true
-	do
-		read -p "${prompt}" || exit 1
-		if [[ -z "${REPLY}" && ! -z "${default}" ]]
-		then
-			REPLY=$default
-		fi
-		case "${REPLY}" in
-			y*|Y*)	return 0;;
-			n*|N*)	return 1;;
-					*)	echo "Answer (y)es or (n)o please";;
-		esac
-	done
 }
 
 # Print a line of repeating characters across the current screen width
@@ -232,7 +197,7 @@ Check_Version ()
 	# v4.3.49:					build 5001153 USG
 	# v4.4.8:						build 5023698 USG
 
-	if [[ ${BUILD} > 4783374 ]]		# Script is tested on builds > OS v1.7.1
+	if [[ ${BUILD} > 5023698 ]]		# Script is tested on builds > OS v1.7.1
 	then
 		return 1
 	elif [[ ${BUILD} < 4783374 ]] # OS must be upgraded
@@ -264,9 +229,15 @@ local i=0
 ERROR=0
 
 	print_line \*
+	echo_logger I "Backing up /${DCLN} to /${DCLN}.bak"
+	try sudo cp "/${DCLN}" "/${DCLN}.bak"
+	echo_logger I "Installing ${BASE}/${DCLN} to /${DCLN}"
+	try sudo install -o root -g root -m 0755 "${BASE}/${DCLN}" "/${DCLN}"
+	echo_logger I "Backing up /${VDIR}/${VSCR} to /${VDIR}/${VSCR}.bak"
+	try sudo cp "/${VDIR}/${VSCR}" "/${VDIR}/${VSCR}.bak"
+	echo_logger I "Installing ${BASE}/${VDIR}/${VSCR} /${VDIR}"
+	try sudo install -o root -g root -m 0755 "${BASE}/${VDIR}/${VSCR}" "/${VDIR}"
 	echo_logger I "Adding RFC2136 DDNS support to EdgeOS [${VER}] configuration templates..."
-	try sudo install -o root -g vyattacfg -m 0755 "${BASE}/${DCLN} /${DCLN}"
-	try sudo install -o root -g vyattacfg -m 0755 "${BASE}/${VDIR}/${VSCR}" "/${VDIR}"
 	try sudo cp -rf "${BASE}/${VCFG}/${TLVL}/dynamic/ /${VCFG}/${TLVL}"
 	try sudo chown -R root:vyattacfg "/${VCFG}"
 
@@ -318,9 +289,9 @@ Set_Persistence ()
 {
 CWD=$(pwd)
 DEBUG_SH="bash_debug_function.sh"
-INSTALLER=installer
+INSTALLER=setup
 POST_CFG_DIR="${BASE_DIR}/scripts/post-config.d"
-POST_CFG_SCRIPT="Install_Packages.sh"
+POST_CFG_SCRIPT="Install_RFC2136.sh"
 RFC2136_VY_CFG="rfc2136.dynamic.dns"
 RM_RFC2136="Remove_RFC2136.sh"
 ERROR=0
@@ -342,7 +313,6 @@ ERROR=0
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${DEBUG_SH}" "${TARGET}/${DEBUG_SH}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${INSTALLER}" "${TARGET}/${INSTALLER}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${POST_CFG_SCRIPT}" "${POST_CFG_DIR}/${POST_CFG_SCRIPT}"
-	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${PUB_KEY}" "${TARGET}/${PUB_KEY}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${RM_RFC2136}" "${TARGET}/${RM_RFC2136}"
 
 	return ${ERROR}
@@ -356,30 +326,30 @@ GETDNSver=$(version added | awk -F ' ' '/dnsutils/ {print $3}') # Find the insta
 PATCHDIR=$(pwd)
 PKG=''
 
-	#make sure my_packages directory exists
-	if [[ ! -d "/var/lib/my_packages" ]]
+	# Make sure rfc2136_integration directory exists
+	if [[ ! -d "/var/lib/rfc2136_integration" ]]
 	then
-		echo_logger I "Creating [/var/lib/my_packages]..."
-		if ! try sudo install -d -o root -g vyattacfg -m 0755 /var/lib/my_packages
+		echo_logger I "Creating [/var/lib/rfc2136_integration]..."
+		if ! try sudo install -d -o root -g vyattacfg -m 0755 /var/lib/rfc2136_integration
 		then
-			echo_logger W "Unable to create [/var/lib/my_packages], attempting to repair..."
-			echo_logger I "Removing [/var/lib/my_packages]..."
-			if try rm -rf /var/lib/my_packages
+			echo_logger W "Unable to create [/var/lib/rfc2136_integration], attempting to repair..."
+			echo_logger I "Removing [/var/lib/rfc2136_integration]..."
+			if try rm -rf /var/lib/rfc2136_integration
 			then
-				echo_logger I "Automatic repair: creating [/var/lib/my_packages]"
-				if ! try sudo install -d -o root -g vyattacfg -m 0755 /var/lib/my_packages
+				echo_logger I "Automatic repair: creating [/var/lib/rfc2136_integration]"
+				if ! try sudo install -d -o root -g vyattacfg -m 0755 /var/lib/rfc2136_integration
 				then
-					echo_logger W "Unable to create [/var/lib/my_packages]!"
+					echo_logger W "Unable to create [/var/lib/rfc2136_integration]!"
 				else
-					echo_logger I "Directory [/var/lib/my_packages] created"
+					echo_logger I "Directory [/var/lib/rfc2136_integration] created"
 				fi
-				echo_logger I "Automatic repair of [/var/lib/my_packages] complete."
+				echo_logger I "Automatic repair of [/var/lib/rfc2136_integration] complete."
 			fi
 		fi
 	fi
 
 	print_line \*
-	if [[ -f "/var/lib/my_packages/debian.wheezy.repo" && $(grep wheezy ${APTPATH}/${APTSRCLST} 2>&1 /dev/null) ]]
+	if [[ -f "/var/lib/rfc2136_integration/debian.wheezy.repo" && $(grep wheezy ${APTPATH}/${APTSRCLST} 2>&1 /dev/null) ]]
 	then
 		echo_logger I "Debian Wheezy [${APTPATH}/${APTSRCLST}] is up to date."
 	else
@@ -393,30 +363,23 @@ PKG=''
 		fi
 		echo_logger I "This firmware uses Debian [wheezy], updating repository configuration..."
 		try delete system package repository # clean out any references to Debian security updates as MIPS64 Wheezy no longer supported
-		try set system package repository wheezy components 'main contrib non-free'
+		try set system package repository wheezy components "'main contrib non-free'"
 		try set system package repository wheezy distribution wheezy
-		try set system package repository wheezy password ''
-		try set system package repository wheezy url 'http://http.us.debian.org/debian/'
-		try set system package repository wheezy username ''
-		try set system package repository wheezy-backports components main
-		try set system package repository wheezy-backports distribution wheezy-backports
-		try set system package repository wheezy-backports password ''
-		try set system package repository wheezy-backports url 'http://http.us.debian.org/debian'
-		try set system package repository wheezy-backports username ''
+		try set system package repository wheezy url http://http.us.debian.org/debian
 		try commit
 		try save
 		try end
 
-		[ -f /var/lib/my_packages/debian.wheezy.repo ] || \
-		try sudo touch /var/lib/my_packages/debian.wheezy.repo
+		[ -f /var/lib/rfc2136_integration/debian.wheezy.repo ] || \
+		try sudo touch /var/lib/rfc2136_integration/debian.wheezy.repo
 	fi
 
 	# Set up packages to install
-	# Iterate through dependencies and add any unavailable ones to install list
+	# Iterate through dependencies and add those required to install list
 	for i in ${PKGs}; do
 		case ${i} in
 			"dnsutils")
-				if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/my_packages/${i}" ]]
+				if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/rfc2136_integration/${i}" ]]
 				then
 					PKG="${PKG} ${i}"
 					echo_logger I "Adding [${i}] package to install list..."
@@ -429,19 +392,19 @@ PKG=''
 					fi
 				fi;;
 			"rfc2136.dynamic.dns")
-				if [[ ! -f "/var/lib/my_packages/${i}" || ! Check_RFC2136_Template ]]
+				if [[ ! -f "/var/lib/rfc2136_integration/${i}" || ! Check_RFC2136_Template ]]
 				then
 					echo_logger I "Adding [${i}] package to install list..."
 					if ! Install_RFC2136_Support
 					then
 						echo_logger W "Unable to install [${i}] package."
 					else
-						try sudo touch /var/lib/my_packages/${i}
+						try sudo touch /var/lib/rfc2136_integration/${i}
 						echo_logger I "Package [${i}] installed."
 					fi
 				fi;;
 				*)
-				if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/my_packages/${i}" ]]
+				if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/rfc2136_integration/${i}" ]]
 				then
 					PKG="${PKG} ${i}"
 					echo_logger I "Adding [${i}] package to install list..."
@@ -455,26 +418,17 @@ PKG=''
 		echo_logger I "The following package(s) will be installed: [${PKG}]..."
 		for this_pkg in ${PKG}; do
 			echo_logger I "Installing [${this_pkg}] package."
-			if [[ ! -f "/var/lib/my_packages/${this_pkg}" ]]
+			if [[ ! -f "/var/lib/rfc2136_integration/${this_pkg}" ]]
 			then
 				if ! try sudo apt-get -f -qq -y install ${this_pkg}
 				then
 					echo_logger W "Unable to install package [${this_pkg}]."
 					if [[ ${this_pkg} = "dnsutils" ]]
 					then
-						echo_logger W "[${this_pkg}] provides the fixed version of [/usr/bin/nsupdate]; in order for [ddclient] to update the DDNS IP address, this problem must be fixed."
-						if yesno -y "Would you like to retry installing the package?	[Y/n] "
-						then
-							if ! try sudo apt-get -f -qq -y install ${this_pkg}
-							then
-								echo_logger E "Unable to install [${this_pkg}] on the second attempt; you must run [sudo apt-get -f install dnsutils] after the script completes."
-							fi
-						else
-							echo_logger W "In order for DDNS to work correctly, you must run [sudo apt-get -f install dnsutils] after the script completes."
-						fi
+						echo_logger W "[${this_pkg}] requires the fixed version of [/usr/bin/nsupdate], in order for [ddclient] to update the DDNS IP address, try running [sudo apt-get -f install dnsutils] after the install completes."
 					fi
 				else
-					try sudo touch /var/lib/my_packages/${this_pkg}
+					try sudo touch /var/lib/rfc2136_integration/${this_pkg}
 					echo_logger S "[${this_pkg}] package installed."
 				fi
 			else
@@ -493,9 +447,9 @@ main()
 
 	print_line \*
 	echo_logger I "Starting EdgeOS Router DDNS RFC2136 Integration Installer..."
-	if [[ -f /var/lib/my_packages/ddns.configured ]]
+	if [[ -f /var/lib/rfc2136_integration/ddns.configured ]]
 	then
-		try sudo rm /var/lib/my_packages/ddns.configured
+		try sudo rm /var/lib/rfc2136_integration/ddns.configured
 	fi
 	Check_Version
 	case ${?} in

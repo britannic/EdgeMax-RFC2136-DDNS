@@ -7,7 +7,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#			http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,8 @@
 #
 # Author: Neil Beadle
 # Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
+
+VERSION="1.2"
 
 ME="${0##*/} ${VERSION}: "
 
@@ -83,124 +85,135 @@ local MSG=
 SHOWVER=$(version | sed 's/$/;/g')
 BUILD=$(echo ${SHOWVER} | awk 'BEGIN {RS=";"} /Build ID:/ {print $3}')
 
-  shopt -s checkwinsize
-  COLUMNS=$(tput cols)
+	shopt -s checkwinsize
+	COLUMNS=$(tput cols)
 
-  case "${1}" in
-    E)
-      shift
-      MSG="[$(red)$(bold)ERROR$(normal)]: ${@}"
-      LOG="[ERROR]: ${@}";;
-    F)
-      shift
-      MSG="[$(red)$(bold)FAILED$(normal)]: ${@}"
-      LOG="[FAILED]: ${@}";;
-    FE)
-      shift
-      MSG="[$(red)$(bold)FATAL ERROR$(normal)]: ${@}"
-      LOG="[FAILED]: ${@}";;
-    I)
-      shift
-      MSG="[$(blue)$(bold)INFO$(normal)]: ${@}"
-      LOG="[INFO]: ${@}";;
-    S)
-      shift
-      MSG="[$(green)$(bold)SUCCESS$(normal)]: ${@}"
-      LOG="[SUCCESS]: ${@}";;
-    T)
-      shift
-      MSG="[$(tan)$(bold)TRYING$(normal)]: ${@}"
-      LOG="[TRYING]: ${@}";;
-    W)
-      shift
-      MSG="[$(yellow)$(bold)WARNING$(normal)]: ${@}"
-      LOG="[WARNING]: ${@}";;
-    *)
-      echo "ERROR: usage: echo_logger MSG TYPE(E, F, FE, I, S, T, W) MSG."
-      exit 1;;
-  esac
+	case "${1}" in
+		E)
+			shift
+			MSG="[$(red)$(bold)ERROR$(normal)]: ${@}"
+			LOG="[ERROR]: ${@}";;
+		F)
+			shift
+			MSG="[$(red)$(bold)FAILED$(normal)]: ${@}"
+			LOG="[FAILED]: ${@}";;
+		FE)
+			shift
+			MSG="[$(red)$(bold)FATAL ERROR$(normal)]: ${@}"
+			LOG="[FAILED]: ${@}";;
+		I)
+			shift
+			MSG="[$(blue)$(bold)INFO$(normal)]: ${@}"
+			LOG="[INFO]: ${@}";;
+		S)
+			shift
+			MSG="[$(green)$(bold)OK$(normal)]: ${@}"
+			LOG="[OK]: ${@}";;
+		T)
+			shift
+			MSG="[$(tan)$(bold)TRYING$(normal)]: ${@}"
+			LOG="[TRYING]: ${@}";;
+		W)
+			shift
+			MSG="[$(yellow)$(bold)WARNING$(normal)]: ${@}"
+			LOG="[WARNING]: ${@}";;
+		*)
+			echo "ERROR: usage: echo_logger MSG TYPE(E, F, FE, I, S, T, W) MSG."
+			exit 1;;
+	esac
 
-  echo "$(echo ${MSG} | ansi)" | fold -s -w ${COLUMNS}
-  logger -t ${ME} "${LOG}"
+	MSG=$(echo "${MSG}" | ansi)
+	let COLUMNS=${#MSG}-${#@}+${COLUMNS}
+	echo "${MSG}" | fold -sw ${COLUMNS}
+	logger -t ${ME} "${LOG}"
 }
 
 # Function to output command status of success or failure to screen and log
 try ()
 {
-  [[ ${DEBUG} ]] && echo_logger T "[${@}]..."
-  if eval ${@}
-  then
-    echo_logger                 S "[${@}]."
-    return 0
-  else
-    echo_logger                 E "[${@}] unsuccessful!"
-    return 1
-  fi
+	[[ ${DEBUG} ]] && echo_logger T "[${@}]..."
+	if eval ${@}
+	then
+		echo_logger									S "[${@}]."
+		return 0
+	else
+		echo_logger									E "[${@}] unsuccessful!"
+		return 1
+	fi
 }
 
 # Usage: yesno prompt...
 yesno ()
 {
-  default=
+	default=
 
-  if [[ "${1}" = "-y" ]]
-  then
-    default='y'
-    shift
-  elif [[ "${1}" = "-n" ]]
-  then
-    default='n'
-    shift
-  fi
+	if [[ "${1}" = "-y" ]]
+	then
+		default='y'
+		shift
+	elif [[ "${1}" = "-n" ]]
+	then
+		default='n'
+		shift
+	fi
 
-  if [[ ${#} = 0 ]]
-  then
-    prompt="[Y/n]: "
-  else
-    prompt="${@}"
-  fi
+	if [[ ${#} = 0 ]]
+	then
+		prompt="[Y/n]: "
+	else
+		prompt="${@}"
+	fi
 
-  while true
-  do
-    read -p "${prompt}" || exit 1
-    if [[ -z "${REPLY}" && ! -z "${default}" ]]
-    then
-      REPLY=$default
-    fi
-    case "${REPLY}" in
-      y*|Y*)  return 0;;
-      n*|N*)  return 1;;
-          *)  echo "Answer (y)es or (n)o please";;
-    esac
-  done
+	while true
+	do
+		read -p "${prompt}" || exit 1
+		if [[ -z "${REPLY}" && ! -z "${default}" ]]
+		then
+			REPLY=$default
+		fi
+		case "${REPLY}" in
+			y*|Y*)	return 0;;
+			n*|N*)	return 1;;
+					*)	echo "Answer (y)es or (n)o please";;
+		esac
+	done
 }
 
 Delete_RFC2136 ()
 {
 local rfc2136_tmpl="/opt/vyatta/share/vyatta-cfg/templates/service/dns/dynamic/interface/node.tag/rfc2136/"
 local post_cfg="/config/scripts/post-config.d/Install_Packages.sh"
-local my_pkgs="/var/lib/my_packages/"
+local my_pkgs="/var/lib/rfc2136_integration/"
 local FILES2RM=( ${rfc2136_tmpl} ${post_cfg} ${my_pkgs})
+local DCLN="/usr/sbin/ddclient"
+local VDIR="/opt/vyatta/sbin/vyatta-dynamic-dns.pl"
 
-  for i in ${FILES2RM[@]}; do
-    if
-    then
-      [[ -d "${i}" ]] try sudo rm -rf "${i}"
-    fi
-  done
+	# Restore original versions of ${DCLN} and ${VDIR}
+	try sudo cp "${DCLN}.bak" "${DCLN}"
+	try sudo cp "${VDIR}.bak" "${VDIR}"
+
+	for i in ${FILES2RM[@]}; do
+		if [[ -d "${i}" ]]
+		then
+			try sudo rm -rf "${i}"
+		elif [[ -f "${i}" ]]
+		then
+			try sudo rm -f "${i}"
+		fi
+	done
 }
 
 main ()
 {
-  echo_logger I "This script will completely remove and erase all RFC 2136 DDNS support and reset the system hostname to 'ubnt'!"
-  if yesno -y "Is that OK? [Y/n]: "
-  then
-    echo_logger I "Starting EdgeOS Router RFC 2136 DDNS configuration removal..."
-    Delete_RFC2136
-    echo_logger I "EdgeOS Router RFC 2136 DDNS configuration removal completed."
-  else
-    echo_logger I "EdgeOS Router RFC 2136 DDNS configuration removal canceled!"
-  fi
+	echo_logger I "This script will completely remove RFC 2136 DDNS integration!"
+	if yesno -y "Is that OK? [Y/n]: "
+	then
+		echo_logger I "Starting EdgeOS Router RFC 2136 DDNS integration removal..."
+		Delete_RFC2136
+		echo_logger I "EdgeOS Router RFC 2136 DDNS integration removal completed."
+	else
+		echo_logger I "EdgeOS Router RFC 2136 DDNS integration removal canceled!"
+	fi
 }
 
 # Now let's do it!

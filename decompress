@@ -20,6 +20,8 @@
 # Author: Neil Beadle
 # Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
 
+VERSION="1.2"
+
 echo -ne "Self Extracting Installer for Dynamic DNS (DDNS) RFC 2136 v${VERSION} support\n\n"
 
 CDIR=$(pwd)
@@ -34,30 +36,30 @@ install_menu ()
 {
 	local IFS=' '
 	local PS3='Enter option number and hit return => '
-	local OPTIONS=('INSTALL' 'REMOVE' 'QUIT')
+	local OPTIONS=('INSTALL' 'REMOVE' 'PURGE' 'QUIT')
 	shopt -s checkwinsize
 	local COLUMNS=$(tput cols)
 
 while true;
 do
-	echo -ne "Would you like to INSTALL or REMOVE?\n\n" | fold -s -w ${COLUMNS}
+	echo -ne "Would you like to INSTALL, REMOVE, PURGE or QUIT?\n\n" | fold -s -w ${COLUMNS}
 	select CHOICE in ${OPTIONS[@]}; do
 		case ${REPLY} in
 			1)	clear console
 					echo "Installing RFC 2136 DDNS support"
-					./installer
+					./setup
 					break
 					return 1
 					;;
 			2)	clear console
-					if /opt/vyatta/bin/yesno -n "Do you want to completely remove RFC 2136 DDNS support v$VERSION? [y/N]: "
-					then
-						./Remove_RFC2136.sh
-						break
-					fi
+					./Remove_RFC2136.sh
 					break
 					;;
-			6|*)	return 0
+			3)	clear console
+					sudo ./ubnt-cln-cfg-orphans.sh
+					break
+					;;
+			4|*)	return 0
 					;;
 		esac
 	done

@@ -22,14 +22,16 @@
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
 
+VERSION=$(cat VERSION)
 NAME='ddns_rfc2136'
+RFC2136="${NAME}.v${VERSION}"
+INSTALL="install_${RFC2136}"
 PAYLOAD='payload'
 SED='gsed -i.bak '
 SEDCMD='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
-UPDATE_CPYRT=(installer Remove_RFC2136.sh decompress LICENSE)
-VERSION=$(cat VERSION)
-RFC2136="${NAME}.${VERSION}."
-INSTALL="install_${NAME}.v${VERSION}"
+SEDVER='s/^VERSION=.*$/VERSION=\"'${VERSION}'\"/g'
+UPDATE_VARS=("${PAYLOAD}/installer" "${PAYLOAD}/Remove_RFC2136.sh" decompress LICENSE)
+
 
 if [ -e "${0##*/}" ]; then
 	BASEDIR=`pwd`
@@ -40,12 +42,13 @@ if [ -e "${0##*/}" ]; then
 
 	if [ -e "${PAYLOAD}.tgz" ]; then
 
-		for i in ${UPDATE_CPYRT[@]}
+		for i in ${UPDATE_VARS[@]}
 		do
 			if [[ -f "${i}" ]]
 			then
 				# Update Copyright to current year
 				eval ${SED} \'${SEDCMD}\' ${i}
+				eval ${SED} \'${SEDVER}\' ${i}
 			fi
 		done
 		cat decompress ${PAYLOAD}.tgz >> ${INSTALL}
@@ -55,8 +58,9 @@ if [ -e "${0##*/}" ]; then
 		exit 1
 	fi
 
-	chmod 755 ${INSTALL}.tgz
-	echo "${RFC2136_Installer}.tgz created"
+	chmod 0755 "${INSTALL}"
+	tar zcf ${INSTALL}.tgz ${INSTALL}
+	echo "${INSTALL} created"
 	cd ..
 	tar -zcf ${INSTALL}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude='*~' $BASEDIR/*
 	mv ${INSTALL}.tgz ${BASEDIR}/
