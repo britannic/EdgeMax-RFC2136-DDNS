@@ -27,6 +27,7 @@ NAME='ddns_rfc2136'
 RFC2136="${NAME}.v${VERSION}"
 INSTALL="install_${RFC2136}"
 PAYLOAD='payload'
+POSTINSTALL="Install_RFC2136"
 SED='gsed -i.bak '
 SEDCMD='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
 SEDVER='s/^VERSION=.*$/VERSION=\"'${VERSION}'\"/g'
@@ -52,6 +53,7 @@ if [ -e "${0##*/}" ]; then
 			fi
 		done
 		cat decompress ${PAYLOAD}.tgz >> ${INSTALL}
+		cat decompress ${PAYLOAD}.tgz >> "${PAYLOAD}/${POSTINSTALL}"
 
 	else
 		echo "${PAYLOAD}.tgz does not exist"

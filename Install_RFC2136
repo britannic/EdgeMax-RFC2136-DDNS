@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+#
+# **** License ****
+#
+# Copyright (C) 2017 by Helm Rock Consulting
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# **** End License ****
+#
+# Author: Neil Beadle
+# Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
+
+VERSION="1.2"
+
+echo -ne "Self Extracting Installer for Dynamic DNS (DDNS) RFC 2136 v${VERSION} support\n\n"
+
+CDIR=$(pwd)
+
+# Make sure script is run as admin
+if [[ ${EUID} -ne 0 ]]
+then
+	echo 'This script must be run as the EdgeOS admin user, not root!'
+	exit 1
+fi
+
+export TMPDIR=$(mktemp -d /tmp/selfextract.XXXXXX)
+
+ARCHIVE=`awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' $0`
+
+tail -n+${ARCHIVE} $0 | tar xz -C ${TMPDIR}
+
+cd "${TMPDIR}/payload"
+
+setup
+
+cd ${CDIR}
+rm -rf ${TMPDIR}
+
+# Fix group since we have to run as root from /config/scripts/post-config.d/
+# otherwise configure won't succeed when run as admin
+chown -R root:vyattacfg /opt/vyatta/config/
+
+exit 0
+
+__ARCHIVE_BELOW__

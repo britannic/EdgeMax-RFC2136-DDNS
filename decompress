@@ -47,15 +47,14 @@ trap atexit exit ${?}
 
 install_menu ()
 {
+	local COLUMNS=$(tput cols)
 	local IFS=' '
-	local PS3='Enter option number or initial and hit return => '
+	local PS3=$(echo -ne "\nWould you like to [I]NSTALL, [R]EMOVE, [B]ACKUP, [P]URGE or [Q]UIT?\n(Run [P]URGE to clean up stale config sessions.)\n\nEnter option number or initial and hit return => " | fold -s -w ${COLUMNS})
 	local OPTIONS=('INSTALL' 'REMOVE' 'PURGE' 'BACKUP' 'QUIT')
 	shopt -s checkwinsize
-	local COLUMNS=$(tput cols)
 
 while true;
 do
-	echo -ne "Would you like to (I)NSTALL, (R)EMOVE, (B)ACKUP, (P)URGE or (Q)UIT?\n(Run (P)URGE to clean up stale config sessions.)\n\n" | fold -s -w ${COLUMNS}
 
 	select CHOICE in ${OPTIONS[@]}; do
 		case ${REPLY} in
@@ -66,7 +65,7 @@ do
 					return 1
 					;;
 			2|R|r)	clear console
-					./Remove_RFC2136.sh
+					./Remove_RFC2136
 					break
 					;;
 			3|P|r)	clear console
@@ -76,11 +75,12 @@ do
 			4|B|b)	run show configuration commands | grep "set service dns dynamic interface .* rfc2136" &> /dev/null
 					if [[ $? == 0 ]]
 					then
+						ISODATE=$(date +'%FT%H%M%S')
 						RESULT=$(run show configuration commands | grep rfc2136 > "/config/user-data/${RFC2136}.cmds")
 						tput setaf 2
-						echo -ne "\nRFC 2136 DDNS integration v${VERSION} configuration backed up to /config/user-data/${RFC2136}.$(date +'%FT%H%M%S').cmds\n\n"
+						echo -ne "\nRFC 2136 DDNS integration v${VERSION} configuration backed up to /config/user-data/${RFC2136}.${ISODATE}.cmds\n\n"
 						tput setaf 7
-						echo -ne "To restore, run:\n\tconfigure\n\tsource /config/user-data/${RFC2136}.cmds\n\tcommit\n\tsave\n\texit\n\n" | fold -s -w ${COLUMNS}
+						echo -ne "To restore, run:\n\tconfigure\n\tsource /config/user-data/${RFC2136}.${ISODATE}.cmds\n\tcommit\n\tsave\n\texit\n\n" | fold -s -w ${COLUMNS}
 					else
 						tput setaf 1
 						echo -ne "\nRFC 2136 DDNS integration isn't configured, nothing to backup!\n\n"

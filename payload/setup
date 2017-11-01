@@ -36,9 +36,10 @@ INSTALLER="setup"
 ME="${0##*/} ${VERSION}: "
 PKGs="dnsutils curl rfc2136.dynamic.dns" # Add packages needed separated by a space
 POST_CFG_DIR="${BASE_DIR}/scripts/post-config.d"
-POST_CFG_SCRIPT="Install_RFC2136.sh"
+POST_CFG_SCRIPT="Install_RFC2136"
+POSTINSTALL="Install_RFC2136"
 RFC2136_VY_CFG="rfc2136.dynamic.dns"
-RM_RFC2136="Remove_RFC2136.sh"
+RM_RFC2136="Remove_RFC2136"
 TARGET="${BASE_DIR}/user-data/RFC2136"
 
 if [[ "$(pwd)" != "${POST_CFG_DIR}" ]]
@@ -209,7 +210,7 @@ Check_Version ()
 	# v4.3.49:					build 5001153 USG
 	# v4.4.8:						build 5023698 USG
 
-	if [[ ${BUILD} > 5023698 ]]		# Script is tested on builds > OS v1.7.1
+	if [[ ${BUILD} > 5024004 ]]		# Script is tested on builds > OS v1.7.1
 	then
 		return 1
 	elif [[ ${BUILD} < 4783374 ]] # OS must be upgraded
@@ -318,7 +319,7 @@ ERROR=0
 	try sudo install -o root -g vyattacfg -m 0755 "${APTPATH}/${APTSRCLST}" "${TARGET}/${APTSRCLST}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${DEBUG_SH}" "${TARGET}/${DEBUG_SH}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${INSTALLER}" "${TARGET}/${INSTALLER}"
-	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${INSTALLER}" "${POST_CFG_DIR}/${POST_CFG_SCRIPT}"
+	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${POSTINSTALL}" "${POST_CFG_DIR}/${POST_CFG_SCRIPT}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${RM_RFC2136}" "${TARGET}/${RM_RFC2136}"
 
 	return ${ERROR}
@@ -449,7 +450,6 @@ main()
 {
 	# print_line \*
 	echo_logger I "${ME}This script will install RFC 2136 dynamic dns (DDNS) support"
-# 	echo
 
 # 	print_line \*
 	echo_logger I "Starting EdgeOS Router DDNS RFC2136 Integration Installer..."
