@@ -6,6 +6,8 @@ NOTE: THIS IS NOT OFFICIAL UBIQUITI SOFTWARE AND THEREFORE NOT SUPPORTED OR ENDO
 ## Overview
 This has been successfully tested on an ERL-3 Lite v1.7.0-v1.9.7+hotfix.4, to add DDNS support for Cloudflare and RFC2136
 
+# Copyright (C) 2017 by Helm Rock Consulting
+
 ## Licenses
 #
 Licensed under the Apache License, Version 2.0 (the "License");

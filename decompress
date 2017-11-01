@@ -2,7 +2,7 @@
 #
 # **** License ****
 #
-# Copyright (C) 2017 by Helmrock Consulting
+# Copyright (C) 2017 by Helm Rock Consulting
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ VERSION="1.2"
 echo -ne "Self Extracting Installer for Dynamic DNS (DDNS) RFC 2136 v${VERSION} support\n\n"
 
 CDIR=$(pwd)
+RFC2136="rfc2136.bkp"
 
 # Make sure script is run as ubnt admin
 if [[ ${EUID} -eq 0 ]]; then
@@ -32,34 +33,62 @@ if [[ ${EUID} -eq 0 ]]; then
 	exit 1
 fi
 
+# Set up the EdgeOS environment
+source /opt/vyatta/etc/functions/script-template
+shopt -s expand_aliases
+alias show='_vyatta_op_run show'
+alias run='/opt/vyatta/bin/vyatta-op-cmd-wrapper'
+alias check='/bin/cli-shell-api'
+
+atexit () {
+	tput cnorm
+}
+trap atexit exit ${?}
+
 install_menu ()
 {
 	local IFS=' '
-	local PS3='Enter option number and hit return => '
-	local OPTIONS=('INSTALL' 'REMOVE' 'PURGE' 'QUIT')
+	local PS3='Enter option number or initial and hit return => '
+	local OPTIONS=('INSTALL' 'REMOVE' 'PURGE' 'BACKUP' 'QUIT')
 	shopt -s checkwinsize
 	local COLUMNS=$(tput cols)
 
 while true;
 do
-	echo -ne "Would you like to INSTALL, REMOVE, PURGE or QUIT?\n\n" | fold -s -w ${COLUMNS}
+	echo -ne "Would you like to (I)NSTALL, (R)EMOVE, (B)ACKUP, (P)URGE or (Q)UIT?\n(Run (P)URGE to clean up stale config sessions.)\n\n" | fold -s -w ${COLUMNS}
+
 	select CHOICE in ${OPTIONS[@]}; do
 		case ${REPLY} in
-			1)	clear console
-					echo "Installing RFC 2136 DDNS support"
+			1|I|i)	clear console
+					echo "Installing RFC 2136 DDNS integration v${VERSION}"
 					./setup
 					break
 					return 1
 					;;
-			2)	clear console
+			2|R|r)	clear console
 					./Remove_RFC2136.sh
 					break
 					;;
-			3)	clear console
+			3|P|r)	clear console
 					sudo ./ubnt-cln-cfg-orphans.sh
 					break
 					;;
-			4|*)	return 0
+			4|B|b)	run show configuration commands | grep "set service dns dynamic interface .* rfc2136" &> /dev/null
+					if [[ $? == 0 ]]
+					then
+						RESULT=$(run show configuration commands | grep rfc2136 > "/config/user-data/${RFC2136}.cmds")
+						tput setaf 2
+						echo -ne "\nRFC 2136 DDNS integration v${VERSION} configuration backed up to /config/user-data/${RFC2136}.$(date +'%FT%H%M%S').cmds\n\n"
+						tput setaf 7
+						echo -ne "To restore, run:\n\tconfigure\n\tsource /config/user-data/${RFC2136}.cmds\n\tcommit\n\tsave\n\texit\n\n" | fold -s -w ${COLUMNS}
+					else
+						tput setaf 1
+						echo -ne "\nRFC 2136 DDNS integration isn't configured, nothing to backup!\n\n"
+						tput setaf 7
+					fi
+					break
+					;;
+			*)	return 0
 					;;
 		esac
 	done
