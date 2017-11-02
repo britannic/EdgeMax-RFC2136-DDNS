@@ -32,6 +32,7 @@ VERSION="1.2"
 APTPATH="/etc/apt"
 APTSRCLST="sources.list"
 BASE_DIR="/config"
+CONFIG="config.boot"
 DEBUG_SH="bash_debug_function.sh"
 ERROR=0
 INSTALLER="setup"
@@ -43,6 +44,7 @@ POSTINSTALL="Install_RFC2136"
 RFC2136_VY_CFG="rfc2136.dynamic.dns"
 RM_RFC2136="Remove_RFC2136"
 TARGET="${BASE_DIR}/user-data/RFC2136"
+TITLE="RFC 2136 dynamic dns (DDNS) [v${VERSION}] integration"
 
 # Set up the Vyatta environment
 source /opt/vyatta/etc/functions/script-template
@@ -243,7 +245,7 @@ ERROR=0
 	try sudo cp "/${VDIR}/${VSCR}" "/${VDIR}/${VSCR}.bak"
 	echo_logger I "Installing ${BASE}/${VDIR}/${VSCR} /${VDIR}"
 	try sudo install -o root -g root -m 0755 "${BASE}/${VDIR}/${VSCR}" "/${VDIR}"
-	echo_logger I "Adding RFC2136 DDNS support to EdgeOS [${VER}] configuration templates..."
+	echo_logger I "Adding &{TITLE} to EdgeOS [${VER}] configuration templates..."
 	try sudo cp -rf "${BASE}/${VCFG}/${TLVL}/dynamic/ /${VCFG}/${TLVL}"
 	try sudo chown -R root:vyattacfg "/${VCFG}"
 
@@ -324,7 +326,7 @@ Add_Pkgs ()
 DNSver="1:9.8.4.dfsg.P1-6+nmu2+deb7u6" # dnsutils package version that works correctly with ddclient 3.8.3
 GETDNSver=$(version added | awk -F ' ' '/dnsutils/ {print $3}') # Find the installed dnsutils package version
 PATCHDIR=$(pwd)
-PKG=''
+PKGS=''
 
 	# Make sure rfc2136_integration directory exists
 	if [[ ! -d "/var/lib/rfc2136_integration" ]]
@@ -354,7 +356,9 @@ PKG=''
 		echo_logger I "Debian Wheezy [${APTPATH}/${APTSRCLST}] is up to date."
 	else
 		echo_logger I "Adding debian repositories to [${APTPATH}/${APTSRCLST}]."
-		# v1.6.0 and above use wheezy
+		# > v1.6.0 uses wheezy
+		echo_logger I "Backing up ${BASE_DIR}/${CONFIG}"
+		try cp ${BASE_DIR}/${CONFIG} ${TARGET}/
 		try begin
 		if (grep squeeze ${APTPATH}/${APTSRCLST} 2>&1 /dev/null)
 		then
@@ -381,13 +385,13 @@ PKG=''
 			"dnsutils")
 				if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/rfc2136_integration/${i}" ]]
 				then
-					PKG="${PKG} ${i}"
+					PKGS="${PKGS} ${i}"
 					echo_logger I "Adding [${i}] package to install list..."
 				else
 					# Since nsupdate is already installed, we need to make sure it isn't the version that has the mem.c assert bug with ddclient - unless proven otherwise, we don't mind it being the latest version
 					if [[ ${GETDNSver} != ${DNSver} ]]
 					then
-						PKG="${PKG} ${i}"
+						PKGS="${PKGS} ${i}"
 						echo_logger I "Adding [${i}] package to install list..."
 					fi
 				fi;;
@@ -406,49 +410,54 @@ PKG=''
 				*)
 				if [[ ! $(which ${i} > /dev/null) && ! -f "/var/lib/rfc2136_integration/${i}" ]]
 				then
-					PKG="${PKG} ${i}"
+					PKGS="${PKGS} ${i}"
 					echo_logger I "Adding [${i}] package to install list..."
 				fi;;
 		esac
 	done
 
-	if [[ "${PKG}" != '' ]]
+	if [[ "${PKGS}" != '' ]]
 	then
 		apt_get_Update
-		echo_logger I "The following package(s) will be installed: [${PKG}]..."
-		for this_pkg in ${PKG}; do
-			echo_logger I "Installing [${this_pkg}] package."
-			if [[ ! -f "/var/lib/rfc2136_integration/${this_pkg}" ]]
+		echo_logger I "The following package(s) will be installed: [${PKGS}]..."
+		for PKG in ${PKGS}
+		do
+			echo_logger I "Installing [${PKG}] package."
+			if [[ ! -f "/var/lib/rfc2136_integration/${PKG}" ]]
 			then
-				if ! try sudo apt-get -f -qq -y install ${this_pkg}
+				if ! try sudo apt-get -f -qq -y install ${PKG}
 				then
-					echo_logger W "Unable to install package [${this_pkg}]."
-					if [[ ${this_pkg} = "dnsutils" ]]
+					echo_logger W "Unable to install package [${PKG}]."
+					if [[ ${PKG} = "dnsutils" ]]
 					then
-						echo_logger W "[${this_pkg}] requires the fixed version of [/usr/bin/nsupdate], in order for [ddclient] to update the DDNS IP address, try running [sudo apt-get -f install dnsutils] after the install completes."
+						echo_logger W "[${PKG}] requires the fixed version of [/usr/bin/nsupdate], in order for [ddclient] to update the DDNS IP address, try running [sudo apt-get -f install dnsutils] after the install completes."
 					fi
 				else
-					try sudo touch /var/lib/rfc2136_integration/${this_pkg}
-					echo_logger S "[${this_pkg}] package installed."
+					try sudo touch /var/lib/rfc2136_integration/${PKG}
+					echo_logger S "[${PKG}] package installed."
 				fi
 			else
-				echo_logger I "[${this_pkg}] package already installed."
+				echo_logger I "[${PKG}] package already installed."
 			fi
 		done
-	echo_logger I "Installation of [${PKG}] completed."
+		echo_logger I "Installation of [${PKGS}] completed."
+		if [[ -f ${TARGET}/${CONFIG} && $(pwd) == ${POST_CFG_DIR} ]]
+		then
+			echo_logger I "Restoring ${TITLE} pre-install configuration"
+			try cp ${TARGET}/${CONFIG} ${BASE_DIR}/${CONFIG}
+		fi
 	fi
 }
 
 main()
 {
-	# print_line \*
-	echo_logger I "${ME}This script will install RFC 2136 dynamic dns (DDNS) support"
+	print_line \*
+	echo_logger I "${ME}Installing EdgeOS Router ${TITLE}..."
+	print_line \*
 
-# 	print_line \*
-	echo_logger I "Starting EdgeOS Router DDNS RFC2136 Integration Installer..."
 	if [[ -f /var/lib/rfc2136_integration/ddns.configured ]]
 	then
-		try sudo rm /var/lib/rfc2136_integration/ddns.configured
+		echo_logger I "${ME}EdgeOS Router ${TITLE} already configured, exiting!"
 	fi
 	Check_Version
 	case ${?} in
@@ -459,7 +468,7 @@ main()
 			[[ "$(pwd)" == "${POST_CFG_DIR}" ]] || Set_Persistence
 			;;
 		1)
-			echo_logger FE "EdgeOS [${VER}] detected, [> v1.7.0] firmware required, upgrade and re-run ersetup."
+			echo_logger FE "EdgeOS [${VER}] detected, [>v1.7.0] firmware required, upgrade and re-run ${ME}."
 			exit 1
 			;;
 		*)
@@ -469,6 +478,13 @@ main()
 
 	print_line \*
 	echo
+
+	# If we're as running post configuration, then reboot
+	if [[ $(pwd) == ${POST_CFG_DIR} ]]
+	then
+		echo_logger I "Rebooting..."
+		try echo "reboot now"
+	fi
 }
 
 # This is where we run the script using the above functions

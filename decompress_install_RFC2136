@@ -44,7 +44,7 @@ cd "${TMPDIR}"
 ./setup
 
 cd ${CDIR}
-# rm -rf ${TMPDIR}
+rm -rf ${TMPDIR}
 
 # Fix group since we have to run as root from /config/scripts/post-config.d/
 # otherwise configure won't succeed when run as admin
