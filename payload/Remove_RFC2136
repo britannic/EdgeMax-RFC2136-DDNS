@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#
 # **** License ****
 #
 # Copyright (C) 2017 by Helm Rock Consulting
@@ -29,12 +30,6 @@ ME="${0##*/} ${VERSION}: "
 # source ./bash_debug_function.sh
 # s_dbg on verbose
 # DEBUG=Yes
-
-# Make sure script is run as admin
-if [[ ${EUID} -eq 0 ]]; then
-	echo 'This script must be run as the EdgeOS admin user, not root!'
-	exit 1
-fi
 
 # Set up the EdgeOS environment
 source /opt/vyatta/etc/functions/script-template

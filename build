@@ -31,18 +31,18 @@ POSTINSTALL="Install_RFC2136"
 SED='gsed -i.bak '
 SEDCMD='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
 SEDVER='s/^VERSION=.*$/VERSION=\"'${VERSION}'\"/g'
-UPDATE_VARS=("${PAYLOAD}/installer" "${PAYLOAD}/Remove_RFC2136.sh" decompress LICENSE)
+UPDATE_VARS=("${PAYLOAD}/setup" "${PAYLOAD}/Remove_RFC2136" decompress decompress_install_RFC2136 LICENSE)
 
 
 if [ -e "${0##*/}" ]; then
-	BASEDIR=`pwd`
-	[[ -f ${RFC2136}setup.tgz ]] && rm ${RFC2136}setup.tgz
+	BASEDIR=$(pwd)
+	[[ -f ${PAYLOAD}.tgz ]] && rm ${PAYLOAD}.tgz
 	cd ${PAYLOAD}
+	[[ -f ${POSTINSTALL} ]] && rm ${POSTINSTALL}
 	tar zcf ../${PAYLOAD}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude='*~' ./*
 	cd ..
 
 	if [ -e "${PAYLOAD}.tgz" ]; then
-
 		for i in ${UPDATE_VARS[@]}
 		do
 			if [[ -f "${i}" ]]
@@ -52,8 +52,14 @@ if [ -e "${0##*/}" ]; then
 				eval ${SED} \'${SEDVER}\' ${i}
 			fi
 		done
-		cat decompress ${PAYLOAD}.tgz >> ${INSTALL}
-		cat decompress ${PAYLOAD}.tgz >> "${PAYLOAD}/${POSTINSTALL}"
+
+		cat decompress_install_RFC2136 ${PAYLOAD}.tgz > "${PAYLOAD}/${POSTINSTALL}"
+		cd ${PAYLOAD}
+
+		tar zcf ../${PAYLOAD}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude="./${PAYLOAD}.tgz" --exclude='*~' ./*
+		cd ..
+
+		cat decompress ${PAYLOAD}.tgz > ${INSTALL}
 
 	else
 		echo "${PAYLOAD}.tgz does not exist"
@@ -61,15 +67,13 @@ if [ -e "${0##*/}" ]; then
 	fi
 
 	chmod 0755 "${INSTALL}"
-	tar zcf ${INSTALL}.tgz ${INSTALL}
 	echo "${INSTALL} created"
-	cd ..
-	tar -zcf ${INSTALL}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude='*~' $BASEDIR/*
-	mv ${INSTALL}.tgz ${BASEDIR}/
-	cd ${BASEDIR}
+
+	[[ -f ${INSTALL}.tgz ]] && rm ${INSTALL}.tgz
+	tar -zcf ${INSTALL}.tgz ${INSTALL}
 
 # scp the build to our test router for debugging
-	[[ ${1} ]] && /usr/bin/scp -i ~/.ssh/jeff_id_rsa "${BASEDIR}"/${INSTALL} ${1}@unms-server:/tmp/${INSTALL}
+	[[ ${1} ]] && /usr/bin/scp "${BASEDIR}"/${INSTALL} ${1}@unms-server.ashcreek.home:/tmp/${INSTALL}
 else
 	echo "$(basename $0) must be run in the directory where it is located."
 fi

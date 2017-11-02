@@ -22,14 +22,14 @@
 
 VERSION="1.2"
 
-echo -ne "Self Extracting Installer for Dynamic DNS (DDNS) RFC 2136 v${VERSION} support\n\n"
+echo -ne "Self Extracting Installer for Dynamic DNS (DDNS) RFC 2136 v${VERSION} integration\n\n"
 
 CDIR=$(pwd)
 
-# Make sure script is run as admin
+# Make sure script is run as root
 if [[ ${EUID} -ne 0 ]]
 then
-	echo 'This script must be run as the EdgeOS admin user, not root!'
+	echo 'This script must be run as sudo/root!'
 	exit 1
 fi
 
@@ -39,12 +39,12 @@ ARCHIVE=`awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' $0`
 
 tail -n+${ARCHIVE} $0 | tar xz -C ${TMPDIR}
 
-cd "${TMPDIR}/payload"
+cd "${TMPDIR}"
 
-setup
+./setup
 
 cd ${CDIR}
-rm -rf ${TMPDIR}
+# rm -rf ${TMPDIR}
 
 # Fix group since we have to run as root from /config/scripts/post-config.d/
 # otherwise configure won't succeed when run as admin

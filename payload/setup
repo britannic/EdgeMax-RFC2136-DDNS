@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+#
 # **** License ****
 #
 # Copyright (C) 2017 by Helm Rock Consulting
@@ -33,7 +35,7 @@ BASE_DIR="/config"
 DEBUG_SH="bash_debug_function.sh"
 ERROR=0
 INSTALLER="setup"
-ME="${0##*/} ${VERSION}: "
+ME="${0##*/}: "
 PKGs="dnsutils curl rfc2136.dynamic.dns" # Add packages needed separated by a space
 POST_CFG_DIR="${BASE_DIR}/scripts/post-config.d"
 POST_CFG_SCRIPT="Install_RFC2136"
@@ -41,16 +43,6 @@ POSTINSTALL="Install_RFC2136"
 RFC2136_VY_CFG="rfc2136.dynamic.dns"
 RM_RFC2136="Remove_RFC2136"
 TARGET="${BASE_DIR}/user-data/RFC2136"
-
-if [[ "$(pwd)" != "${POST_CFG_DIR}" ]]
-then
-	# Make sure script is run as admin
-	if [[ ${EUID} -eq 0 ]]
-	then
-		echo 'This script must be run as the EdgeOS admin user, not root!'
-		exit 1
-	fi
-fi
 
 # Set up the Vyatta environment
 source /opt/vyatta/etc/functions/script-template
@@ -226,6 +218,7 @@ atexit ()
 {
 	end
 # 	print_line \*
+# 	echo
 }
 
 # Install the rfc2136.dynamic.dns templates in /opt/vyatta/share/vyatta-cfg/templates
@@ -319,7 +312,7 @@ ERROR=0
 	try sudo install -o root -g vyattacfg -m 0755 "${APTPATH}/${APTSRCLST}" "${TARGET}/${APTSRCLST}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${DEBUG_SH}" "${TARGET}/${DEBUG_SH}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${INSTALLER}" "${TARGET}/${INSTALLER}"
-	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${POSTINSTALL}" "${POST_CFG_DIR}/${POST_CFG_SCRIPT}"
+	[[ -f "${POST_CFG_DIR}/${POST_CFG_SCRIPT}" ]] || try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${POSTINSTALL}" "${POST_CFG_DIR}/${POST_CFG_SCRIPT}"
 	try sudo install -o root -g vyattacfg -m 0755 "${CWD}/${RM_RFC2136}" "${TARGET}/${RM_RFC2136}"
 
 	return ${ERROR}
@@ -473,6 +466,9 @@ main()
 			echo_logger FE "This shouldn't happen, so we're exiting just in case!"
 			exit 1
 	esac
+
+	print_line \*
+	echo
 }
 
 # This is where we run the script using the above functions
