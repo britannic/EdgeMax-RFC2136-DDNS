@@ -58,8 +58,8 @@ if [ -e "${0##*/}" ]; then
 
 		tar zcf ../${PAYLOAD}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude="./${PAYLOAD}.tgz" --exclude='*~' ./*
 		cd ..
-
-		cat decompress ${PAYLOAD}.tgz > ${INSTALL}
+		echo "#!/usr/bin/env bash" > ${INSTALL}
+		cat LICENSE ${PAYLOAD}/shell_functions decompress ${PAYLOAD}.tgz >> ${INSTALL}
 
 	else
 		echo "${PAYLOAD}.tgz does not exist"

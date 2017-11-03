@@ -21,7 +21,7 @@
 # Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
 
 # Uncomment for debugging or syntax checking
-# Syntax check - uncomment for non execution dry run:
+# Syntax check - uncomment these 4 lines below for non execution dry run:
 # set -n
 # source ./bash_debug_function.sh
 # s_dbg on verbose
@@ -41,10 +41,14 @@ PKGs="dnsutils curl rfc2136.dynamic.dns" # Add packages needed separated by a sp
 POST_CFG_DIR="${BASE_DIR}/scripts/post-config.d"
 POST_CFG_SCRIPT="Install_RFC2136"
 POSTINSTALL="Install_RFC2136"
+RFC2136_CMDS="rfc2136_cfg_cmds"
 RFC2136_VY_CFG="rfc2136.dynamic.dns"
 RM_RFC2136="Remove_RFC2136"
 TARGET="${BASE_DIR}/user-data/RFC2136"
-TITLE="RFC 2136 dynamic dns (DDNS) [v${VERSION}] integration"
+TITLE="Install Dynamic DNS (DDNS) RFC 2136 integration v${VERSION}"
+
+# Load shell functions
+source ./shell_functions
 
 # Set up the Vyatta environment
 source /opt/vyatta/etc/functions/script-template
@@ -101,7 +105,6 @@ WANIF=$(ip route get 8.8.8.8 | awk -F"dev " 'NR==1 {split($2,a," ");print a[1]}'
 echo_logger ()
 {
 local MSG=
-
 	shopt -s checkwinsize
 	COLUMNS=$(tput cols)
 
@@ -160,12 +163,12 @@ try ()
 }
 
 # Print a line of repeating characters across the current screen width
-print_line ()
-{
-	printf "\n"
-	eval printf %.0s${1:-\-} '{1..'"${2:-$(tput cols)}"\}
-	printf "\n\n"
-}
+# print_line ()
+# {
+# 	printf "\n"
+# 	eval printf %.0s${1:-\-} '{1..'"${2:-$(tput cols)}"\}
+# 	printf "\n\n"
+# }
 
 Internet ()
 {
@@ -245,7 +248,7 @@ ERROR=0
 	try sudo cp "/${VDIR}/${VSCR}" "/${VDIR}/${VSCR}.bak"
 	echo_logger I "Installing ${BASE}/${VDIR}/${VSCR} /${VDIR}"
 	try sudo install -o root -g root -m 0755 "${BASE}/${VDIR}/${VSCR}" "/${VDIR}"
-	echo_logger I "Adding &{TITLE} to EdgeOS [${VER}] configuration templates..."
+	echo_logger I "Adding ${TITLE} to EdgeOS [${VER}] configuration templates..."
 	try sudo cp -rf "${BASE}/${VCFG}/${TLVL}/dynamic/ /${VCFG}/${TLVL}"
 	try sudo chown -R root:vyattacfg "/${VCFG}"
 
@@ -357,8 +360,6 @@ PKGS=''
 	else
 		echo_logger I "Adding debian repositories to [${APTPATH}/${APTSRCLST}]."
 		# > v1.6.0 uses wheezy
-		echo_logger I "Backing up ${BASE_DIR}/${CONFIG}"
-		try cp ${BASE_DIR}/${CONFIG} ${TARGET}/
 		try begin
 		if (grep squeeze ${APTPATH}/${APTSRCLST} 2>&1 /dev/null)
 		then
@@ -449,11 +450,38 @@ PKGS=''
 	fi
 }
 
+rfc2136_bkp()
+{
+	try begin
+	echo_logger I "Backing up RFC 2136 configuration..."
+	try run show configuration commands | match rfc2136 > ${TARGET}/${RFC2136_CMDS}
+	try commit
+	try save
+	try end
+}
+
+rfc2136_rst()
+{
+	try begin
+	echo_logger I "Restoring up RFC 2136 configuration..."
+	try source "${TARGET}/${RFC2136_CMDS}"
+	try commit
+	try save
+	try end
+}
+
 main()
 {
 	print_line \*
 	echo_logger I "${ME}Installing EdgeOS Router ${TITLE}..."
 	print_line \*
+
+	# If we're as running post configuration, then back up RFC 2136 configuration
+	if [[ $(pwd) == "${POST_CFG_DIR}" ]]
+	then
+		rfc2136_bkp
+		print_line \*
+	fi
 
 	if [[ -f /var/lib/rfc2136_integration/ddns.configured ]]
 	then
@@ -479,11 +507,11 @@ main()
 	print_line \*
 	echo
 
-	# If we're as running post configuration, then reboot
-	if [[ $(pwd) == ${POST_CFG_DIR} ]]
+	# If we're as running post configuration, then restore RFC 2136 configuration
+	if [[ $(pwd) == "${POST_CFG_DIR}" ]]
 	then
-		echo_logger I "Rebooting..."
-		try echo "reboot now"
+		rfc2136_rst
+		print_line \*
 	fi
 }
 

@@ -22,7 +22,7 @@
 
 VERSION="1.2"
 
-echo -ne "Self Extracting Installer for Dynamic DNS (DDNS) RFC 2136 v${VERSION} integration\n\n"
+echo -ne "Self Extracting Installer for Install Dynamic DNS (DDNS) RFC 2136 integration v${VERSION}\n\n"
 
 CDIR=$(pwd)
 
