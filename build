@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#
 # **** License ****
 #
 # Copyright (C) 2017 by Helm Rock Consulting
@@ -33,9 +34,9 @@ SEDCMD='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
 SEDVER='s/^VERSION=.*$/VERSION=\"'${VERSION}'\"/g'
 UPDATE_VARS=("${PAYLOAD}/setup" "${PAYLOAD}/Remove_RFC2136" decompress decompress_install_RFC2136 LICENSE)
 
-
-if [ -e "${0##*/}" ]; then
-	BASEDIR=$(pwd)
+if [[ -e "${0##*/}" ]]
+then
+	BASEDIR="$(pwd)"
 	[[ -f ${PAYLOAD}.tgz ]] && rm ${PAYLOAD}.tgz
 	cd ${PAYLOAD}
 	[[ -f ${POSTINSTALL} ]] && rm ${POSTINSTALL}

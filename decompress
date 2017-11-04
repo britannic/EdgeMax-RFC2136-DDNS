@@ -7,7 +7,7 @@ VERSION="1.2"
 
 CDIR=$(pwd)
 RFC2136="rfc2136.bkp"
-TITLE="  Install Dynamic DNS (DDNS) RFC 2136 integration v${VERSION}  "
+TITLE="  Install Dynamic DNS (DDNS) RFC 2136 Integration v${VERSION}  "
 OPTIONS=('(I)nstall Integration' '(R)emove Integration' '(P)urge Stale Files' '(B)ackup Integration' '(Q)uit Install')
 
 # Make sure script is run as ubnt admin
@@ -31,7 +31,7 @@ trap atexit exit ${?}
 install_menu ()
 {
 	local options=("$@")
-	read -p "Enter number or initial of menu option => " choice
+	read -p "Enter number or initial letter of menu option => " choice
 
 	case ${choice} in
 		0|I|i)	echo "Installing RFC 2136 DDNS integration v${VERSION}"
@@ -43,7 +43,6 @@ install_menu ()
 				;;
 		2|P|r)	sudo ./ubnt-cln-cfg-orphans.sh
 						pause
-# 						break
 				;;
 		3|B|b)	run show configuration commands | grep "set service dns dynamic interface .* rfc2136" &> /dev/null
 						if [[ $? == 0 ]]
