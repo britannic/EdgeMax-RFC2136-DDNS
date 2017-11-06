@@ -26,7 +26,7 @@ export COPYFILE_DISABLE=true
 VERSION=$(cat VERSION)
 NAME='ddns_rfc2136'
 RFC2136="${NAME}.v${VERSION}"
-INSTALL="install_${RFC2136}"
+INSTALL="install_${RFC2136}_v${VERSION}"
 PAYLOAD='payload'
 POSTINSTALL="Install_RFC2136"
 SED='gsed -i.bak '
@@ -54,7 +54,8 @@ then
 			fi
 		done
 
-		cat decompress_install_RFC2136 ${PAYLOAD}.tgz > "${PAYLOAD}/${POSTINSTALL}"
+		echo "#!/usr/bin/env bash" > "${PAYLOAD}/${POSTINSTALL}"
+		cat LICENSE decompress_install_RFC2136 ${PAYLOAD}.tgz >> "${PAYLOAD}/${POSTINSTALL}"
 		cd ${PAYLOAD}
 
 		tar zcf ../${PAYLOAD}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude="./${PAYLOAD}.tgz" --exclude='*~' ./*

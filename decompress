@@ -48,7 +48,7 @@ install_menu ()
 						if [[ $? == 0 ]]
 						then
 							ISODATE=$(date +'%FT%H%M%S')
-							RESULT=$(run show configuration commands | grep rfc2136 > "/config/user-data/${RFC2136}.cmds")
+							RESULT=$(run show configuration commands | grep rfc2136 > "/config/user-data/${RFC2136}.${ISODATE}.cmds")
 							tput setaf 2
 							echo -ne "\nRFC 2136 DDNS integration v${VERSION} configuration backed up to /config/user-data/${RFC2136}.${ISODATE}.cmds\n\n"
 							tput setaf 7

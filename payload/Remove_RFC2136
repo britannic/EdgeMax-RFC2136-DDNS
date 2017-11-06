@@ -177,7 +177,7 @@ yesno ()
 Delete_RFC2136 ()
 {
 local rfc2136_tmpl="/opt/vyatta/share/vyatta-cfg/templates/service/dns/dynamic/interface/node.tag/rfc2136/"
-local post_cfg="/config/scripts/post-config.d/Install_RFC2136"
+local post_cfg="/config/scripts/post-config.d/Install_RFC2136*"
 local my_pkgs="/var/lib/rfc2136_integration/"
 local DCLN="/usr/sbin/ddclient"
 local VDIR="/opt/vyatta/sbin/vyatta-dynamic-dns.pl"
