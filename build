@@ -28,11 +28,11 @@ NAME='ddns_rfc2136'
 RFC2136="${NAME}.v${VERSION}"
 INSTALL="install_${RFC2136}_v${VERSION}"
 PAYLOAD='payload'
-POSTINSTALL="Install_RFC2136"
+POSTINSTALL="Install_${RFC2136}"
 SED='gsed -i.bak '
 SEDCMD='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
 SEDVER='s/^VERSION=.*$/VERSION=\"'${VERSION}'\"/g'
-UPDATE_VARS=("${PAYLOAD}/setup" "${PAYLOAD}/Remove_RFC2136" decompress decompress_install_RFC2136 LICENSE)
+UPDATE_VARS=("${PAYLOAD}/setup" "${PAYLOAD}/Remove_${RFC2136}" decompress decompress_install_RFC2136 LICENSE)
 
 if [[ -e "${0##*/}" ]]
 then
@@ -56,7 +56,10 @@ then
 
 		echo "#!/usr/bin/env bash" > "${PAYLOAD}/${POSTINSTALL}"
 		cat LICENSE decompress_install_RFC2136 ${PAYLOAD}.tgz >> "${PAYLOAD}/${POSTINSTALL}"
+		echo "${POSTINSTALL} created"
 		cd ${PAYLOAD}
+
+		chmod 0755 ${POSTINSTALL}
 
 		tar zcf ../${PAYLOAD}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude="./${PAYLOAD}.tgz" --exclude='*~' ./*
 		cd ..
@@ -72,7 +75,8 @@ then
 	echo "${INSTALL} created"
 
 	[[ -f ${INSTALL}.tgz ]] && rm ${INSTALL}.tgz
-	tar -zcf ${INSTALL}.tgz ${INSTALL}
+	tar zcf ${INSTALL}.tgz ${INSTALL}
+	[[ -d "${DROPBOX}/" ]] && install -m 0755 ${INSTALL}.tgz "${DROPBOX}/"
 
 # scp the build to our test router for debugging
 	[[ ${1} ]] && /usr/bin/scp "${BASEDIR}"/${INSTALL} ${1}@unms-server.ashcreek.home:/tmp/${INSTALL}

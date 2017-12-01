@@ -7,7 +7,7 @@ VERSION="1.2"
 
 CDIR=$(pwd)
 RFC2136="rfc2136.bkp"
-TITLE="  Install Dynamic DNS (DDNS) RFC 2136 Integration v${VERSION}  "
+TITLE="Install Dynamic DNS (DDNS) RFC 2136 Integration v${VERSION}"
 OPTIONS=('(I)nstall Integration' '(R)emove Integration' '(P)urge Stale Files' '(B)ackup Integration' '(Q)uit Install')
 
 # Make sure script is run as ubnt admin
