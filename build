@@ -25,8 +25,9 @@ export COPYFILE_DISABLE=true
 
 VERSION=$(cat VERSION)
 NAME='ddns_rfc2136'
-RFC2136="${NAME}.v${VERSION}"
-INSTALL="install_${RFC2136}_v${VERSION}"
+DROPBOX="$HOME/Dropbox/EdgeOS"
+RFC2136="${NAME}"
+INSTALL="install_${RFC2136}.v${VERSION}"
 PAYLOAD='payload'
 POSTINSTALL="Install_${RFC2136}"
 SED='gsed -i.bak '
