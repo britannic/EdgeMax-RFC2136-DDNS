@@ -3,8 +3,8 @@
 # Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
 
 VERSION="1.2"
-
-echo -ne "Self Extracting Installer for Install Dynamic DNS (DDNS) RFC 2136 integration v${VERSION}\n\n"
+NAME="Dynamic DNS (DDNS) RFC 2136 integration v${VERSION}"
+echo -ne "Self Extracting Installer for ${NAME}\n\n"
 
 CDIR=$(pwd)
 
@@ -13,6 +13,12 @@ if [[ ${EUID} -ne 0 ]]
 then
 	echo 'This script must be run as sudo/root!'
 	exit 1
+fi
+
+if [[ -d "/var/lib/rfc2136_integration" ]]
+then
+	echo "${NAME} already installed, exiting..."
+	exit
 fi
 
 export TMPDIR=$(mktemp -d /tmp/selfextract.XXXXXX)

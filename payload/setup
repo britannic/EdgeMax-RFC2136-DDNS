@@ -162,14 +162,6 @@ try ()
 	fi
 }
 
-# Print a line of repeating characters across the current screen width
-# print_line ()
-# {
-# 	printf "\n"
-# 	eval printf %.0s${1:-\-} '{1..'"${2:-$(tput cols)}"\}
-# 	printf "\n\n"
-# }
-
 Internet ()
 {
 	if sudo curl -D- -o /dev/null -s http://www.google.com 2>&1> /dev/null

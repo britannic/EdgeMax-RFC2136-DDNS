@@ -1,5 +1,5 @@
 
-
+#
 # Author: Neil Beadle
 # Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
 
@@ -31,6 +31,7 @@ trap atexit exit ${?}
 install_menu ()
 {
 	local options=("$@")
+	local COLUMNS=$(tput cols)
 	read -p "Enter number or initial letter of menu option => " choice
 
 	case ${choice} in
@@ -75,12 +76,12 @@ cd ${TMPDIR}
 
 while true
 do
-	show_menu "${TITLE}" "${OPTIONS[@]}"
+	show_menu "   Install ${TITLE}   " "${OPTIONS[@]}"
 	install_menu "${OPTIONS[@]}"
 done
 
-cd ${CDIR}
-sudo rm -rf ${TMPDIR}
+cd "${CDIR}"
+sudo rm -rf "${TMPDIR}"
 
 exit 0
 
