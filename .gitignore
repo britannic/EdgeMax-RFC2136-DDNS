@@ -9,3 +9,8 @@
 browse.VC.db
 
 .DS_Store
+*.help
+
+1.9.7.Hotfix.4.vyatta-dynamic-dns.pl
+
+vyatta-dynamic-dns.pl

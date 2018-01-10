@@ -198,8 +198,9 @@ Check_Version ()
 	# UniFi Security Gateway
 	# v4.3.49:					build 5001153 USG
 	# v4.4.8:						build 5023698 USG
+	# v4.4.12:					build 5032482 USG
 
-	if [[ ${BUILD} > 5024004 ]]		# Script is tested on builds > OS v1.7.1
+	if [[ ${BUILD} > 5032482 ]]		# Script is tested on builds > OS v1.7.1
 	then
 		return 1
 	elif [[ ${BUILD} < 4783374 ]] # OS must be upgraded
