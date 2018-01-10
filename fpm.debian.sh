@@ -18,6 +18,7 @@ fpm -f \
     -n ${pkg}  \
     --deb-pre-depends dnsutils \
     -t ${dist} \
+    --url "https://github.com/britannic/EdgeMax-RFC2136-DDNS"
     -v ${ver}  \
     -x \**/.DS_Store \
     -s dir usr/ opt/ \
