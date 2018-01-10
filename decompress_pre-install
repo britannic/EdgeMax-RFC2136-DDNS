@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+ext='dpkg'
+dir='/opt/vyatta/sbin'
+file='vyatta-dynamic-dns.pl'
+cwd=$(pwd)
+
+export TMPDIR=$(mktemp -d /tmp/selfextract.XXXXXX)
+
+ARCHIVE=$(awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' $0)
+
+tail -n+${ARCHIVE} $0 | tar xz -C ${TMPDIR}
+
+cd ${TMPDIR}
+
+if [[ -e "${dir}/${file}" ]]; then
+	if ! cmp -s ${file} ${dir}/${file}; then
+		echo "${DPKG_MAINTSCRIPT_PACKAGE} - backing up ${dir}/${file}..."
+		cp "${dir}/${file}" "${dir}/${file}.${ext}"
+		cp "${file}" "${dir}/"
+	fi
+fi
+
+cd "${cwd}"
+sudo rm -rf "${TMPDIR}"
+exit 0
+
+__ARCHIVE_BELOW__
