@@ -1,87 +1,98 @@
 #!/usr/bin/env bash
-#
-# **** License ****
-#
-# Copyright (C) 2017 by Helm Rock Consulting
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# **** End License ****
-#
-# Author: Neil Beadle
-# Adds RFC2136 DDNS templates to the EdgeOS based Edge Routers
 
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
+drop="$HOME/Dropbox/EdgeOS"
+arch='all'
+dep='dnsutils'
+desc='Adds EdgeOS DDNS configuration templates for Cloudflare and RFC2136'
+dir='/tmp/'
+dist='deb'
+exc1=\**/.DS_Store
+exc2=\**/sbin
+host='dev1'
+lic='http://www.apache.org/licenses/LICENSE-2.0'
+mntr="${pkg}@helmrock.com"
+pkg='edgeos-rfc2136-ddns'
+post='./post-install.sh'
+pre='./pre-install.sh'
+prov='Adds EdgeOS DDNS configuration templates for Cloudflare and RFC2136'
+sarg='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
+scmd='gsed -i.bak '
+sdir='payload/rfc2136.dynamic.dns/'
+src1='usr/'
+src2='opt/'
+url='https://github.com/britannic/EdgeMax-RFC2136-DDNS'
+vars=(LICENSE README.md)
+vend='Helm Rock Consulting'
+ver=$(cat VERSION)
+pver=$(cat OLDVERSION)
+zver='s/${pkg}_"'${ver}'"_/${pkg}_\"'${pver}'_\"/g'
 
-VERSION=$(cat VERSION)
-NAME='ddns_rfc2136'
-DROPBOX="$HOME/Dropbox/EdgeOS"
-RFC2136="${NAME}"
-INSTALL="install_${RFC2136}.v${VERSION}"
-PAYLOAD='payload'
-POSTINSTALL="Install_${RFC2136}"
-SED='gsed -i.bak '
-SEDCMD='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
-SEDVER='s/^VERSION=.*$/VERSION=\"'${VERSION}'\"/g'
-UPDATE_VARS=("${PAYLOAD}/setup" "${PAYLOAD}/Remove_${RFC2136}" decompress decompress_install_RFC2136 LICENSE)
+bundle ()
+{
+  cwd=$(pwd)
+  local dir='./payload/rfc2136.dynamic.dns/opt/vyatta/sbin'
+  local target='vyatta-dynamic-dns.pl'
+  local templt='decompress_pre-install'
 
-if [[ -e "${0##*/}" ]]
-then
-	BASEDIR="$(pwd)"
-	[[ -f ${PAYLOAD}.tgz ]] && rm ${PAYLOAD}.tgz
-	cd ${PAYLOAD}
-	[[ -f ${POSTINSTALL} ]] && rm ${POSTINSTALL}
-	tar zcf ../${PAYLOAD}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude='*~' ./*
-	cd ..
+  cat "${templt}" > "${pre}"
+  cd "${dir}"
 
-	if [ -e "${PAYLOAD}.tgz" ]; then
-		for i in ${UPDATE_VARS[@]}
-		do
-			if [[ -f "${i}" ]]
-			then
-				# Update Copyright to current year
-				eval ${SED} \'${SEDCMD}\' ${i}
-				eval ${SED} \'${SEDVER}\' ${i}
-			fi
-		done
+  tar -zc \
+  --exclude='._*' \
+  --exclude='.svn' \
+  --exclude='.DS_Store' \
+  --exclude='*.bak' \
+  --exclude='*~' \
+  ./* >> "${cwd}/${pre}"
+  cd "${cwd}"
+}
 
-		echo "#!/usr/bin/env bash" > "${PAYLOAD}/${POSTINSTALL}"
-		cat LICENSE decompress_install_RFC2136 ${PAYLOAD}.tgz >> "${PAYLOAD}/${POSTINSTALL}"
-		echo "${POSTINSTALL} created"
-		cd ${PAYLOAD}
+do_copyright () {
+  [[ ! cmp -s VERSION OLDVERSION ]] && cp VERSION OLDVERSION
+  for i in ${vars[@]}
+  do
+    if [[ -f "${i}" ]]
+    then
+      # Update Copyright to current year
+      eval ${scmd} \'${sarg}\' ${i}
+      eval ${scmd} \'${zver}\' ${i}
+    fi
+  done
+}
 
-		chmod 0755 ${POSTINSTALL}
+make_debian ()
+{
+  fpm \
+    -f \
+    --after-remove "${post}" \
+    --before-install "${pre}" \
+    --deb-pre-depends "${dep}" \
+    --description "${desc}" \
+    --license "${lic}" \
+    --provides "${prov}" \
+    --url "${url}" \
+    --vendor "${vend}" \
+    --verbose \
+    -a "${arch}" \
+    -C "${sdir}" \
+    -m "${mntr}" \
+    -n "${pkg}"  \
+    -t "${dist}" \
+    -v "${ver}"  \
+    -x "${exc1}" \
+    -x "${exc2}" \
+    -s dir "${src1}" "${src2}"
+}
 
-		tar zcf ../${PAYLOAD}.tgz --exclude='._*' --exclude='.svn' --exclude='.DS_Store' --exclude='*.bak' --exclude="./${PAYLOAD}.tgz" --exclude='*~' ./*
-		cd ..
-		echo "#!/usr/bin/env bash" > ${INSTALL}
-		cat LICENSE ${PAYLOAD}/shell_functions decompress ${PAYLOAD}.tgz >> ${INSTALL}
+update_dropbox () {
+  [[ -d "${drop}/" ]] && install -m 0755 "${pkg}_${ver}_${arch}.${dist}" "${drop}/"
+}
 
-	else
-		echo "${PAYLOAD}.tgz does not exist"
-		exit 1
-	fi
+upload () {
+  scp "${pkg}_${ver}_${arch}.${dist}" "${host}:${dir}"
+}
 
-	chmod 0755 "${INSTALL}"
-	echo "${INSTALL} created"
-
-	[[ -f ${INSTALL}.tgz ]] && rm ${INSTALL}.tgz
-	tar zcf ${INSTALL}.tgz ${INSTALL}
-	[[ -d "${DROPBOX}/" ]] && install -m 0755 ${INSTALL}.tgz "${DROPBOX}/"
-
-# scp the build to our test router for debugging
-	[[ ${1} ]] && /usr/bin/scp "${BASEDIR}"/${INSTALL} ${1}@unms-server.ashcreek.home:/tmp/${INSTALL}
-else
-	echo "$(basename $0) must be run in the directory where it is located."
-fi
-exit 0
+# Build it!
+bundle && make_debian && update_dropbox && upload

@@ -22,6 +22,8 @@
 #
 # **** End License ****
 #
+# File patched by package edgeos-rfc2136-ddns, to restore original version run:
+# $(sudo apt-get remove edgeos-rfc2136-ddns)
 
 use lib "/opt/vyatta/share/perl5/";
 use Vyatta::Config;

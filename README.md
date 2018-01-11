@@ -26,7 +26,17 @@ limitations under the License.
 * Menu driven install and remove scripts
 
 ## Compatibility
-* Tested on the EdgeRouter ER-L routers, versions v1.7.0-v1.9.7+hotfix.4
-* Since EdgeOS is a fork and port of Vyatta 6.3, these scripts could easily be adapted to work on VyOS and Vyatta derived ports
+* Tested on EdgeRouter:
+  - EdgeRouter Lite 3-Port v1.7.0-v1.9.7+hotfix.4
+  - EdgeRouter Lite 5-Port v1.7.0-v1.9.7+hotfix.4
+  - ER-X v1.9.7+hotfix.4
+  - UniFi-Gateway-3 v4.4.12
 
-## WIP
+## Installation
+* Install dnsutils:
+        sudo apt-get update
+        sudo apt-get install dnsutils
+
+* Download the Debian package edgeos-rfc2136-ddns_1.2.1_all.deb from <TODO URL>
+  - Install edgeos-rfc2136-ddns using:
+        sudo dpkg -i edgeos-rfc2136-ddns_1.2.1_all.deb
