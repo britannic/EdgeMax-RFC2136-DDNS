@@ -23,7 +23,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ## Features
-* Menu driven install and remove scripts
+* Simple Debian package installation and removal
 
 ## Compatibility
 * Tested on EdgeRouter:
@@ -31,12 +31,17 @@ limitations under the License.
   - EdgeRouter Lite 5-Port v1.7.0-v1.9.7+hotfix.4
   - ER-X v1.9.7+hotfix.4
   - UniFi-Gateway-3 v4.4.12
+  
+## Dependencies
+* dnsutils
 
 ## Installation
 * Install dnsutils:
+
         sudo apt-get update
         sudo apt-get install dnsutils
 
 * Download the Debian package edgeos-rfc2136-ddns_1.2.1_all.deb from <TODO URL>
   - Install edgeos-rfc2136-ddns using:
+  
         sudo dpkg -i edgeos-rfc2136-ddns_1.2.1_all.deb
