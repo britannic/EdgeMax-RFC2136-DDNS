@@ -10,6 +10,7 @@ dir='/tmp/'
 dist='deb'
 exc1=\**/.DS_Store
 exc2=\**/sbin
+exc3=\**/*.bak
 host='dev1'
 lic='http://www.apache.org/licenses/LICENSE-2.0'
 mntr="${pkg}@helmrock.com"
@@ -27,7 +28,7 @@ vars=(LICENSE README.md)
 vend='Helm Rock Consulting'
 ver=$(cat VERSION)
 pver=$(cat OLDVERSION)
-zver='s/${pkg}_"'${ver}'"_/${pkg}_\"'${pver}'_\"/g'
+zver='s/'${pkg}'_'${pver}'_/'${pkg}'_'${ver}'_/g'
 
 bundle ()
 {
@@ -50,7 +51,10 @@ bundle ()
 }
 
 do_copyright () {
-  [[ ! cmp -s VERSION OLDVERSION ]] && cp VERSION OLDVERSION
+  if ! cmp -s VERSION OLDVERSION; then
+    cp VERSION OLDVERSION
+  fi
+
   for i in ${vars[@]}
   do
     if [[ -f "${i}" ]]
@@ -83,6 +87,7 @@ make_debian ()
     -v "${ver}"  \
     -x "${exc1}" \
     -x "${exc2}" \
+    -x "${exc3}" \
     -s dir "${src1}" "${src2}"
 }
 
@@ -95,4 +100,4 @@ upload () {
 }
 
 # Build it!
-bundle && make_debian && update_dropbox && upload
+do_copyright && bundle && make_debian && update_dropbox && upload
