@@ -41,7 +41,8 @@ limitations under the License.
         sudo apt-get update
         sudo apt-get install dnsutils
 
-* Download the Debian package edgeos-rfc2136-ddns_1.2.1_all.deb from <TODO URL>
+* Download the Debian package [edgeos-rfc2136-ddns_1.2.1_all.deb](https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.1_all.deb)
+
   - Install edgeos-rfc2136-ddns using:
   
         sudo dpkg -i edgeos-rfc2136-ddns_1.2.1_all.deb
