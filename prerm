@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+export DEBIAN_FRONTEND=noninteractive
+
+targets=('/opt/vyatta/sbin/vyatta-dynamic-dns.pl' '/opt/vyatta/share/vyatta-cfg/templates/service/dns/dynamic/interface/node.def')
+
+for target in "${targets[@]}"; do
+	if [[ -e ${target}.dpkg ]]; then
+		if ! cmp -s ${target}.dpkg ${target}; then
+			echo "${DPKG_MAINTSCRIPT_PACKAGE} - restoring ${target}..."
+			mv "${target}.dpkg" "${target}"
+		fi
+	fi
+done
+
+exit 0

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+export DEBIAN_FRONTEND=noninteractive
+
+cwd=$(pwd)
+ext='dpkg'
+ddns_dir='/opt/vyatta/sbin'
+ddns_exe='vyatta-dynamic-dns.pl'
+node_def='node.def'
+node_dir='/opt/vyatta/share/vyatta-cfg/templates/service/dns/dynamic/interface'
+
+export TMPDIR=$(mktemp -d /tmp/selfextract.XXXXXX)
+
+ARCHIVE=$(awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' $0)
+
+tail -n+${ARCHIVE} $0 | tar xz -C ${TMPDIR}
+
+cd ${TMPDIR}
+
+if [[ -e "${ddns_dir}/${ddns_exe}" ]]; then
+	if ! cmp -s ${ddns_exe} ${ddns_dir}/${ddns_exe}; then
+		echo "${DPKG_MAINTSCRIPT_PACKAGE} - backing up ${ddns_dir}/${ddns_exe}..."
+		cp "${ddns_dir}/${ddns_exe}" "${ddns_dir}/${ddns_exe}.${ext}"
+		cp "${ddns_exe}" "${ddns_dir}/"
+	fi
+fi
+
+if [[ -e "${node_dir}/${node_def}" ]]; then
+	if ! cmp -s ${node_def} ${node_dir}/${node_def}; then
+		echo "${DPKG_MAINTSCRIPT_PACKAGE} - backing up ${node_dir}/${node_def}..."
+		cp "${node_dir}/${node_def}" "${node_dir}/${node_def}.${ext}"
+		cp "${node_def}" "${node_dir}/"
+	fi
+fi
+
+cd ${cwd} 
+sudo rm -rf "${TMPDIR}"
+exit 0
+
+__ARCHIVE_BELOW__
