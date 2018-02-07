@@ -6,7 +6,7 @@ NOTE: THIS IS NOT OFFICIAL UBIQUITI SOFTWARE AND THEREFORE NOT SUPPORTED OR ENDO
 ## Overview
 Adds EdgeOS DDNS templates for Cloudflare and RFC2136
 
-# Copyright (C) 2017 by Helm Rock Consulting
+# Copyright (C) 2018 by Helm Rock Consulting
 
 ## Licenses
 #
@@ -23,7 +23,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ## Features
-* Menu driven install and remove scripts
+* Adds templates for RFC2136 and CloudFlare DDNS support to EdgeRouters
+* Simple Debian package installation and removal
 
 ## Compatibility
 * Tested on EdgeRouter:
@@ -32,11 +33,17 @@ limitations under the License.
   - ER-X v1.9.7+hotfix.4
   - UniFi-Gateway-3 v4.4.12
 
+## Dependencies
+* dnsutils
+
 ## Installation
 * Install dnsutils:
+
         sudo apt-get update
         sudo apt-get install dnsutils
 
-* Download the Debian package edgeos-rfc2136-ddns_1.2.1_all.deb from <TODO URL>
+* Download the Debian package [edgeos-rfc2136-ddns_1.2.2_all.deb](https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.2_all.deb)
+
   - Install edgeos-rfc2136-ddns using:
-        sudo dpkg -i edgeos-rfc2136-ddns_1.2.1_all.deb
+
+        sudo dpkg -i edgeos-rfc2136-ddns_1.2.2_all.deb

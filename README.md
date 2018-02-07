@@ -23,27 +23,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ## Features
+
 * Adds templates for RFC2136 and CloudFlare DDNS support to EdgeRouters
 * Simple Debian package installation and removal
 
 ## Compatibility
+
 * Tested on EdgeRouter:
-  - EdgeRouter Lite 3-Port v1.7.0-v1.9.7+hotfix.4
-  - EdgeRouter Lite 5-Port v1.7.0-v1.9.7+hotfix.4
+  - EdgeRouter Lite 3-Port v1.7.0-v1.10
+  - EdgeRouter Lite 5-Port v1.7.0-v1.10
   - ER-X v1.9.7+hotfix.4
-  - UniFi-Gateway-3 v4.4.12
+  - UniFi-Gateway-3 v4.4.12-4.4.18
 
 ## Dependencies
+
 * dnsutils
 
 ## Installation
+
 * Install dnsutils:
 
-        sudo apt-get update
-        sudo apt-get install dnsutils
+```bash
+sudo apt-get update
+sudo apt-get install dnsutils
+```
 
-* Download the Debian package [edgeos-rfc2136-ddns_1.2.1_all.deb](https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.1_all.deb)
+* Download the Debian package [edgeos-rfc2136-ddns_1.2.2_all.deb](https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.2_all.deb)
+* Install edgeos-rfc2136-ddns using:
 
-  - Install edgeos-rfc2136-ddns using:
-
-        sudo dpkg -i edgeos-rfc2136-ddns_1.2.1_all.deb
+```bash
+sudo dpkg -i edgeos-rfc2136-ddns_1.2.2_all.deb
+```

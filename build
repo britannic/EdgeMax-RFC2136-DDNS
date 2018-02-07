@@ -15,8 +15,9 @@ host='dev1'
 lic='http://www.apache.org/licenses/LICENSE-2.0'
 mntr="${pkg}@helmrock.com"
 pkg='edgeos-rfc2136-ddns'
-post='./post-install.sh'
-pre='./pre-install.sh'
+prerm='./prerm'
+preinst='./preinst'
+postinst='./postinst'
 prov='Adds EdgeOS DDNS configuration templates for Cloudflare and RFC2136'
 sarg='s/Copyright (C) 20../Copyright (C) '$(date +"%Y")'/g'
 scmd='gsed -i.bak '
@@ -32,12 +33,12 @@ zver='s/'${pkg}'_'${pver}'_/'${pkg}'_'${ver}'_/g'
 
 bundle ()
 {
-  cwd=$(pwd)
-  local dir='./payload/rfc2136.dynamic.dns/opt/vyatta/sbin'
-  local target='vyatta-dynamic-dns.pl'
-  local templt='decompress_pre-install'
+  local dir='./payload/rfc2136.dynamic.dns/'
+  local templt='decompress_postinst'
 
-  cat "${templt}" > "${pre}"
+  cwd=$(pwd)
+  cp README.md "${dir}"/usr/share/doc/edgeos-rfc2136/
+  cat "${templt}" > "${postinst}"
   cd "${dir}"
 
   tar -zc \
@@ -46,8 +47,8 @@ bundle ()
   --exclude='.DS_Store' \
   --exclude='*.bak' \
   --exclude='*~' \
-  ./* >> "${cwd}/${pre}"
-  cd "${cwd}"
+  ./* >> "${cwd}/${postinst}"
+  cd -
 }
 
 do_copyright () {
@@ -70,8 +71,8 @@ make_debian ()
 {
   fpm \
     -f \
-    --after-remove "${post}" \
-    --before-install "${pre}" \
+    --before-remove "${prerm}" \
+    --after-install "${postinst}" \
     --deb-pre-depends "${dep}" \
     --description "${desc}" \
     --license "${lic}" \
