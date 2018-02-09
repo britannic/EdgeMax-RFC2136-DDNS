@@ -30,9 +30,9 @@ limitations under the License.
 ## Compatibility
 
 * Tested on EdgeRouter:
-  - EdgeRouter Lite 3-Port v1.7.0-v1.10
-  - EdgeRouter Lite 5-Port v1.7.0-v1.10
-  - ER-X v1.9.7+hotfix.4
+  - EdgeRouter ERLite 3-Port v1.7.0-v1.10
+  - EdgeRouter ERLite 5-Port v1.7.0-v1.10
+  - ER-X v1.7.0-v1.10
   - UniFi-Gateway-3 v4.4.12-4.4.18
 
 ## Dependencies
@@ -52,5 +52,6 @@ sudo apt-get install dnsutils
 * Install edgeos-rfc2136-ddns using:
 
 ```bash
+curl https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.2_all.deb
 sudo dpkg -i edgeos-rfc2136-ddns_1.2.2_all.deb
 ```
