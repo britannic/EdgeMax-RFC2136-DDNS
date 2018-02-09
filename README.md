@@ -48,8 +48,7 @@ sudo apt-get update
 sudo apt-get install dnsutils
 ```
 
-* Download the Debian package [edgeos-rfc2136-ddns_1.2.2_all.deb](https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.2_all.deb)
-* Install edgeos-rfc2136-ddns using:
+* Download the Debian package [edgeos-rfc2136-ddns_1.2.2_all.deb](https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.2_all.deb) and install edgeos-rfc2136-ddns using:
 
 ```bash
 curl https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.2_all.deb
