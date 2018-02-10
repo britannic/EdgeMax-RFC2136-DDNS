@@ -1,15 +1,17 @@
 # UBNT EdgeMax Scripts and Utilities
+
 http://community.ubnt.com/t5/EdgeMAX
 
 NOTE: THIS IS NOT OFFICIAL UBIQUITI SOFTWARE AND THEREFORE NOT SUPPORTED OR ENDORSED BY Ubiquiti Networks®
 
 ## Overview
+
 Adds EdgeOS DDNS templates for Cloudflare and RFC2136
 
-# Copyright (C) 2018 by Helm Rock Consulting
+## Copyright (C) 2018 by Helm Rock Consulting
 
 ## Licenses
-#
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -30,10 +32,10 @@ limitations under the License.
 ## Compatibility
 
 * Tested on EdgeRouter:
-  - EdgeRouter ERLite 3-Port v1.7.0-v1.10
-  - EdgeRouter ERLite 5-Port v1.7.0-v1.10
-  - ER-X v1.7.0-v1.10
-  - UniFi-Gateway-3 v4.4.12-4.4.18
+  * EdgeRouter ERLite 3-Port v1.7.0-v1.10
+  * EdgeRouter ERLite 5-Port v1.7.0-v1.10
+  * EdgeRouter ER-X v1.7.0-v1.10.0
+  * UniFi-Gateway-3 v4.4.12-4.4.18
 
 ## Dependencies
 
