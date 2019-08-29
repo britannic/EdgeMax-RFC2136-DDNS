@@ -32,7 +32,7 @@ NOTE: THIS IS NOT OFFICIAL UBIQUITI SOFTWARE AND THEREFORE NOT SUPPORTED OR ENDO
 
 Adds EdgeOS DDNS templates for Cloudflare and RFC2136
 
-## Copyright (C) 2098 by Helm Rock Consulting
+## Copyright (C) 2019 by Helm Rock Consulting
 
 ## Licenses
 
