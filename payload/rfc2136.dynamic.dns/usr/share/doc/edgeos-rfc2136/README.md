@@ -32,7 +32,7 @@ NOTE: THIS IS NOT OFFICIAL UBIQUITI SOFTWARE AND THEREFORE NOT SUPPORTED OR ENDO
 
 Adds EdgeOS DDNS templates for Cloudflare and RFC2136
 
-## Copyright (C) 2018 by Helm Rock Consulting
+## Copyright (C) 2019 by Helm Rock Consulting
 
 ## Licenses
 
@@ -72,15 +72,20 @@ limitations under the License.
 * Install dnsutils:
 
 ```bash
+configure
+set system package repository wheezy components main
+set system package repository wheezy distribution wheezy
+set system package repository wheezy url 'http://archive.debian.org/debian'
+commit;save;exit
 sudo apt-get update
 sudo apt-get install dnsutils
 ```
 
-* Download the Debian package [edgeos-rfc2136-ddns_1.2.3_all.deb](https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.3_all.deb) and install edgeos-rfc2136-ddns using:
+* Download the Debian package [edgeos-rfc2136-ddns_1.3.0_all.deb](https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.3.0_all.deb) and install edgeos-rfc2136-ddns using:
 
 ```bash
-curl -O https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.2.3_all.deb
-sudo dpkg -i edgeos-rfc2136-ddns_1.2.3_all.deb
+curl -O https://github.com/britannic/EdgeMax-RFC2136-DDNS/raw/master/edgeos-rfc2136-ddns_1.3.0_all.deb
+sudo dpkg -i edgeos-rfc2136-ddns_1.3.0_all.deb
 ```
 
 ## Configuration
@@ -88,6 +93,10 @@ sudo dpkg -i edgeos-rfc2136-ddns_1.2.3_all.deb
 * Here's an example configuration
 
 ```bash
+configure
+set system package repository wheezy components main
+set system package repository wheezy distribution wheezy
+set system package repository wheezy url 'http://archive.debian.org/debian'
 set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com key /config/auth/keys/testsvr.private
 set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com login /usr/bin/nsupdate
 set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com record testsvr.top.dog.com
@@ -101,11 +110,20 @@ set service dns dynamic interface eth1 rfc2136 test.top.dog.com record test.top.
 set service dns dynamic interface eth1 rfc2136 test.top.dog.com server ns.top.dog.com
 set service dns dynamic interface eth1 rfc2136 test.top.dog.com ttl 3600
 set service dns dynamic interface eth1 rfc2136 test.top.dog.com zone top.dog.com
+commit;save;exit
 ```
 
 * The resulting configuration stanzas will be stored in /config/config.boot as:
 
 ```bash
+configure
+nutter@myrouter# show system package repository wheezy
+ repository wheezy {
+     components main
+     distribution wheezy
+     url http://archive.debian.org/debian
+ }
+
 nutter@myrouter# show service dns dynamic interface eth1 rfc2136
  rfc2136 test2.top.dog.com {
      key /config/auth/keys/test.private

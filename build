@@ -2,9 +2,10 @@
 
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
+auxdep="dnsutils"
 drop="$HOME/Dropbox/EdgeOS"
 arch='all'
-dep='dnsutils'
+dep='libdata-validate-ip-perl'
 desc='Adds EdgeOS DDNS configuration templates for Cloudflare and RFC2136'
 dir='/tmp/'
 dist='deb'
@@ -81,6 +82,7 @@ make_debian ()
     --vendor "${vend}" \
     --verbose \
     -a "${arch}" \
+    -d "${auxdep}" \
     -C "${sdir}" \
     -m "${mntr}" \
     -n "${pkg}"  \
