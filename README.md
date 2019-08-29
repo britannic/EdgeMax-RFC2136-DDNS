@@ -100,8 +100,7 @@ set system package repository wheezy url 'http://archive.debian.org/debian'
 set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com key /config/auth/keys/testsvr.private
 set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com login /usr/bin/nsupdate
 set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com record testsvr.top.dog.com
-set service dns
-dynamic interface eth1 rfc2136 testsvr.top.dog.com server ns.top.dog.com
+set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com server ns.top.dog.com
 set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com ttl 3600
 set service dns dynamic interface eth1 rfc2136 testsvr.top.dog.com zone top.dog.com
 set service dns dynamic interface eth1 rfc2136 test.top.dog.com key /config/auth/keys/test.private
